@@ -7,7 +7,13 @@ import (
 
 func NewServer() http.Handler {
 	mux := http.NewServeMux()
-	r.AddRoutes(mux)
+	addRoutes(mux)
 	var handler http.Handler = mux
 	return handler
+}
+
+func addRoutes(
+	mux *http.ServeMux,
+) {
+	mux.Handle("/", r.HandleHelloWorld())
 }
