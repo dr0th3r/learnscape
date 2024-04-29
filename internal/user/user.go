@@ -1,6 +1,7 @@
 package user
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/http"
@@ -35,7 +36,9 @@ func parseFromForm(f url.Values) (*User, error) {
 }
 
 func (u *User) saveToDB(db *pgxpool.Pool) error {
-	return nil
+	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
+		u.id, u.name, u.surname, u.email, u.password)
+	return err
 }
 
 func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
@@ -53,6 +56,7 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 				fmt.Println(err.Error())
 				w.WriteHeader(http.StatusBadRequest)
 				fmt.Fprintf(w, err.Error())
+				return
 			}
 
 			if err := user.saveToDB(db); err != nil {

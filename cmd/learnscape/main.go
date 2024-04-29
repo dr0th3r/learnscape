@@ -23,6 +23,7 @@ func run(ctx context.Context) error {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error connecting to database: %s\n", err)
 	}
+	defer db.Close()
 
 	srv := internal.NewServer(db)
 	httpServer := &http.Server{
