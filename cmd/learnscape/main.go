@@ -12,13 +12,19 @@ import (
 	"time"
 
 	"github.com/dr0th3r/learnscape/internal"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 func run(ctx context.Context) error {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	srv := internal.NewServer()
+	db, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error connecting to database: %s\n", err)
+	}
+
+	srv := internal.NewServer(db)
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort("localhost", "8080"),
 		Handler: srv,

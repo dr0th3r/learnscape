@@ -38,7 +38,7 @@ func (u *User) saveToDB(db *pgxpool.Pool) error {
 	return nil
 }
 
-func HandleCreateUser(db *pgxpool.Pool) http.Handler {
+func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			if err := r.ParseForm(); err != nil {
