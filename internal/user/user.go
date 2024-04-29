@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -36,8 +37,13 @@ func parseFromForm(f url.Values) (*User, error) {
 }
 
 func (u *User) saveToDB(db *pgxpool.Pool) error {
-	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
-		u.id, u.name, u.surname, u.email, u.password)
+	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
+	if err != nil {
+		return err
+	}
+
+	_, err = db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
+		u.id, u.name, u.surname, u.email, password_hash)
 	return err
 }
 
