@@ -1,7 +1,7 @@
 package internal
 
 import (
-	r "github.com/dr0th3r/learnscape/internal/routes"
+	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
 	"net/http"
 )
 
@@ -15,5 +15,5 @@ func NewServer() http.Handler {
 func addRoutes(
 	mux *http.ServeMux,
 ) {
-	mux.Handle("/", r.HandleHelloWorld())
+	mux.Handle("/health_check", hcheck.HandleHealthCheck())
 }
