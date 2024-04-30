@@ -23,4 +23,5 @@ func addRoutes(
 ) {
 	mux.Handle("/health_check", hcheck.HandleHealthCheck())
 	mux.Handle("POST /register_user", user.HandleRegisterUser(db, rdb))
+	mux.Handle("POST /login", user.HandleLogin(db, rdb))
 }
