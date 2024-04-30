@@ -9,6 +9,7 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -38,9 +39,6 @@ func parseFromForm(f url.Values) (*User, error) {
 
 func (u *User) saveToDB(db *pgxpool.Pool) error {
 	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
-	if err != nil {
-		return err
-	}
 
 	_, err = db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
 		u.id, u.name, u.surname, u.email, password_hash)
@@ -67,6 +65,14 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 
 			if err := user.saveToDB(db); err != nil {
 				fmt.Println(err.Error())
+
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+					w.WriteHeader(http.StatusConflict)
+					fmt.Fprintf(w, "Email already registered")
+					return
+				}
+
 				w.WriteHeader(http.StatusInternalServerError)
 				fmt.Fprintf(w, "Failed to save user to db")
 			}
