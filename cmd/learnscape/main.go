@@ -13,6 +13,7 @@ import (
 
 	"github.com/dr0th3r/learnscape/internal"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/redis/go-redis/v9"
 )
 
 func run(ctx context.Context) error {
@@ -25,7 +26,13 @@ func run(ctx context.Context) error {
 	}
 	defer db.Close()
 
-	srv := internal.NewServer(db)
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
+
+	srv := internal.NewServer(db, rdb)
 	httpServer := &http.Server{
 		Addr:    net.JoinHostPort("localhost", "8080"),
 		Handler: srv,
