@@ -7,6 +7,11 @@ if ! [ -x "$(command -v psql)" ]; then
 	exit 1
 fi
 
+if ![ -x "$(command -v migrate)" ]; then
+	echo >&2 "Error: migrate is not installed."
+	exit 1
+fi
+
 DB_USER=${POSTGRES_USER:=postgres}
 DB_PASSWORD="${POSTGRES_PASSWORD:=password}"
 DB_NAME="${POSTGRES_DB:=learnscape}"
@@ -32,3 +37,5 @@ done
 >&2 echo "Postgres is up and running on port ${DB_PORT}!"
 
 export DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@localhost:${DB_PORT}/${DB_NAME}?sslmode=disable
+
+migrate -database $DATABASE_URL -path $(dirname $0)/../internal/db/migrations up
