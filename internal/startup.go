@@ -16,6 +16,8 @@ import (
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+
+	u "github.com/dr0th3r/learnscape/internal/utils"
 )
 
 func initDB() (*pgxpool.Pool, error) {
@@ -38,7 +40,7 @@ func initDB() (*pgxpool.Pool, error) {
 	return pgxpool.New(context.Background(), full_db_url)
 }
 
-func Run(ctx context.Context) error {
+func Run(ctx context.Context) (err error) {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
@@ -47,6 +49,17 @@ func Run(ctx context.Context) error {
 		return errors.New("error connecting to database: " + err.Error())
 	}
 	defer db.Close()
+
+	otelShutdown, err := u.SetupOTelSDK(ctx)
+	if err != nil {
+		return errors.New("error setting up otel " + err.Error())
+	}
+
+	defer func() {
+		if err := otelShutdown(context.Background()); err != nil {
+			fmt.Fprintf(os.Stderr, "error shutting down otel: %s\n", err)
+		}
+	}()
 
 	srv := NewServer(db)
 	httpServer := &http.Server{
