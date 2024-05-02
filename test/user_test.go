@@ -107,10 +107,22 @@ func TestUser(t *testing.T) {
 		}
 		defer res.Body.Close()
 
-		got := res.StatusCode
-		want := http.StatusCreated
-		if got != want {
-			t.Errorf("Got %d, want %d", got, want)
+		gotCode := res.StatusCode
+		wantCode := http.StatusCreated
+		if gotCode != wantCode {
+			t.Errorf("Got %d, want %d", gotCode, wantCode)
+		}
+
+		gotCookies := res.Cookies()
+
+		gotCookiesLen := len(res.Cookies())
+		wantCookiesLen := 1
+		if gotCookiesLen != wantCookiesLen {
+			t.Errorf("Got %d cookies, wanted %d", gotCookiesLen, wantCookiesLen)
+		}
+
+		if gotCookies[0].Name != "token" || !gotCookies[0].HttpOnly || gotCookies[0].SameSite != http.SameSiteStrictMode {
+			t.Errorf("Got %s invalid cookie", gotCookies[0])
 		}
 	})
 
@@ -144,10 +156,22 @@ func TestUser(t *testing.T) {
 		}
 		defer res.Body.Close()
 
-		got = res.StatusCode
-		want = http.StatusOK
-		if got != want {
-			t.Errorf("Got %d, want %d", got, want)
+		gotCode := res.StatusCode
+		wantCode := http.StatusOK
+		if gotCode != wantCode {
+			t.Errorf("Got %d, want %d", gotCode, wantCode)
+		}
+
+		gotCookies := res.Cookies()
+
+		gotCookiesLen := len(res.Cookies())
+		wantCookiesLen := 1
+		if gotCookiesLen != wantCookiesLen {
+			t.Errorf("Got %d cookies, wanted %d", gotCookiesLen, wantCookiesLen)
+		}
+
+		if gotCookies[0].Name != "token" || !gotCookies[0].HttpOnly || gotCookies[0].SameSite != http.SameSiteStrictMode {
+			t.Errorf("Got %s invalid cookie", gotCookies[0])
 		}
 	})
 }
