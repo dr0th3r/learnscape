@@ -43,8 +43,9 @@ func dropDB(url string, db_name string) error {
 	return nil
 }
 
-func waitForReady(ctx context.Context, client *http.Client) error {
+func waitForReady(ctx context.Context) error {
 	startTime := time.Now()
+	client := &http.Client{}
 	for {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, "http://localhost:8080/health_check", nil)
 		if err != nil {

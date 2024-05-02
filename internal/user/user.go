@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"net/mail"
 	"net/url"
 	"time"
 
@@ -23,13 +24,30 @@ type User struct {
 	password string
 }
 
+func validatePassword(password string) error {
+	if len(password) < 8 {
+		return errors.New("Password is too short")
+	}
+
+	return nil
+}
+
 func parseRegister(f url.Values) (*User, error) {
+	email, err := mail.ParseAddress(f.Get("email"))
+	if err != nil {
+		return nil, err
+	}
+	password := f.Get("password")
+	if err := validatePassword(password); err != nil {
+		return nil, err
+	}
+
 	user := User{
 		id:       uuid.NewString(),
 		name:     f.Get("name"),
 		surname:  f.Get("surname"),
-		email:    f.Get("email"),
-		password: f.Get("password"),
+		email:    email.Address,
+		password: password,
 	}
 
 	if user.name == "" || user.surname == "" || user.email == "" || user.password == "" {
@@ -40,9 +58,18 @@ func parseRegister(f url.Values) (*User, error) {
 }
 
 func parseLogin(f url.Values) (*User, error) {
+	email, err := mail.ParseAddress(f.Get("email"))
+	if err != nil {
+		return nil, err
+	}
+	password := f.Get("password")
+	if err := validatePassword(password); err != nil {
+		return nil, err
+	}
+
 	user := User{
-		email:    f.Get("email"),
-		password: f.Get("password"),
+		email:    email.Address,
+		password: password,
 	}
 
 	if user.email == "" || user.password == "" {
@@ -145,6 +172,8 @@ func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 			if err := setSessionId(w, sessionId); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Failed to set session id")
 			}
+
+			w.WriteHeader(http.StatusCreated)
 		},
 	)
 }
