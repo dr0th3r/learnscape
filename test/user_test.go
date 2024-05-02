@@ -33,7 +33,9 @@ func TestUser(t *testing.T) {
 	t.Cleanup(cancel)
 	go i.Run(ctx)
 
-	waitForReady(ctx)
+	if err := waitForReady(ctx); err != nil {
+		t.Error(err)
+	}
 
 	register_url := "http://localhost:8080/register_user"
 	login_url := "http://localhost:8080/login"
