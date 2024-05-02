@@ -8,7 +8,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/healthCheck"
 )
 
-func TestHandler(t *testing.T) {
+func TestHealthCheck(t *testing.T) {
 	t.Run("health check returns 200", func(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, "/health_check", nil)
 		res := httptest.NewRecorder()
