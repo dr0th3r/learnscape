@@ -10,10 +10,10 @@ import (
 
 	"github.com/alexedwards/argon2id"
 	"github.com/dr0th3r/learnscape/internal/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/redis/go-redis/v9"
 )
 
 type User struct {
@@ -79,7 +79,7 @@ func parseLogin(f url.Values) (*User, error) {
 	return &user, nil
 }
 
-func (u *User) saveToDB(db *pgxpool.Pool, rdb *redis.Client) (*string, error) {
+func (u *User) saveToDB(db *pgxpool.Pool) error {
 	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
 
 	ctx := context.Background()
@@ -87,57 +87,59 @@ func (u *User) saveToDB(db *pgxpool.Pool, rdb *redis.Client) (*string, error) {
 	_, err = db.Exec(ctx, "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
 		u.id, u.name, u.surname, u.email, password_hash)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	sessionId := uuid.NewString()
-	if err := rdb.Set(ctx, "session_id", sessionId, time.Hour*72).Err(); err != nil {
-		return nil, err
-	}
-	return &sessionId, nil
+	return nil
 }
 
-func (u *User) login(db *pgxpool.Pool, rdb *redis.Client) (*string, error) {
+func (u *User) login(db *pgxpool.Pool) error {
 	ctx := context.Background()
 
 	var dbPassword string
 	if err := db.QueryRow(ctx, "select password from users where email=$1", u.email).Scan(&dbPassword); err != nil {
-		return nil, err
+		return err
 	}
 
 	passwordsMatch, err := argon2id.ComparePasswordAndHash(u.password, dbPassword)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	if !passwordsMatch {
-		return nil, errors.New("Passwords do not match")
+		return errors.New("Passwords do not match")
 	}
 
-	sessionId := uuid.NewString()
-	if err := rdb.Set(ctx, "session_id", sessionId, time.Hour*72).Err(); err != nil {
-		return nil, err
-	}
-	return &sessionId, nil
-}
-
-func setSessionId(w http.ResponseWriter, sessionId *string) error {
-	if sessionId == nil {
-		return errors.New("Session id was not provided")
-	}
-
-	cookie := http.Cookie{
-		Name:     "sessionId",
-		Value:    *sessionId,
-		Expires:  time.Now().Add(72 * time.Hour),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-	}
-
-	http.SetCookie(w, &cookie)
 	return nil
 }
 
-func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
+func (u *User) setToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		jwt.MapClaims{
+			"id":      u.id,
+			"name":    u.name,
+			"surname": u.surname,
+			"email":   u.email,
+			"exp":     exp.Unix(),
+		})
+
+	tokentStr, err := token.SignedString(secret)
+	if err != nil {
+		return err
+	}
+
+	tokenCookie := http.Cookie{
+		Name:     "token",
+		Value:    tokentStr,
+		Expires:  exp,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode, //TODO: add other config by OWASP later
+	}
+	http.SetCookie(w, &tokenCookie)
+
+	return nil
+}
+
+func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			if err := r.ParseForm(); err != nil {
@@ -151,8 +153,7 @@ func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 				return
 			}
 
-			sessionId, err := user.saveToDB(db, rdb)
-			if err != nil {
+			if err := user.saveToDB(db); err != nil {
 				var code int
 				var msg string
 
@@ -169,8 +170,8 @@ func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 				return
 			}
 
-			if err := setSessionId(w, sessionId); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Failed to set session id")
+			if err := user.setToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
 			}
 
 			w.WriteHeader(http.StatusCreated)
@@ -178,7 +179,7 @@ func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 	)
 }
 
-func HandleLogin(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
+func HandleLogin(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			if err := r.ParseForm(); err != nil {
@@ -192,14 +193,13 @@ func HandleLogin(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 				return
 			}
 
-			sessionId, err := user.login(db, rdb)
-			if err != nil {
+			if err := user.login(db); err != nil {
 				utils.HandleError(w, err, http.StatusUnauthorized, "Failed to log user in")
 				return
 			}
 
-			if err := setSessionId(w, sessionId); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Failed to set session id")
+			if err := user.setToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
 			}
 		},
 	)

@@ -6,7 +6,7 @@ import (
 )
 
 func HandleError(w http.ResponseWriter, err error, code int, msg string) {
-	fmt.Printf(err.Error())
+	fmt.Println(err)
 	w.WriteHeader(code)
 	if msg == "" {
 		fmt.Fprintf(w, err.Error())
