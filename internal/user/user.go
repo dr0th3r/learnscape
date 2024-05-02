@@ -12,6 +12,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -79,12 +80,10 @@ func parseLogin(f url.Values) (*User, error) {
 	return &user, nil
 }
 
-func (u *User) saveToDB(db *pgxpool.Pool) error {
+func (u *User) SaveToDB(tx pgx.Tx) error {
 	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
 
-	ctx := context.Background()
-
-	_, err = db.Exec(ctx, "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
+	_, err = tx.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
 		u.id, u.name, u.surname, u.email, password_hash)
 	if err != nil {
 		return err
@@ -112,7 +111,7 @@ func (u *User) login(db *pgxpool.Pool) error {
 	return nil
 }
 
-func (u *User) setToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
+func (u *User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"id":      u.id,
@@ -153,7 +152,12 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := user.saveToDB(db); err != nil {
+			tx, err := db.Begin(context.Background()) //tx is necessary becuase this is not the only endpoint using SveToDB
+			if err != nil {
+				utils.HandleError(w, err, http.StatusInternalServerError, "")
+			}
+			defer tx.Rollback(context.Background())
+			if err := user.SaveToDB(tx); err != nil {
 				var code int
 				var msg string
 
@@ -169,8 +173,11 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 				utils.HandleError(w, err, code, msg)
 				return
 			}
+			if err := tx.Commit(context.Background()); err != nil {
+				utils.HandleError(w, err, http.StatusInternalServerError, "")
+			}
 
-			if err := user.setToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
+			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
 			}
 
@@ -198,7 +205,7 @@ func HandleLogin(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := user.setToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
+			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
 			}
 		},

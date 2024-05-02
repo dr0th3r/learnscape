@@ -100,7 +100,7 @@ func TestUser(t *testing.T) {
 			"name":     {"test"},
 			"surname":  {"idk"},
 			"email":    {"random2@email.com"},
-			"password": {"test123456"}, //password is too short
+			"password": {"test123456"},
 		})
 		if err != nil {
 			t.Error(err)

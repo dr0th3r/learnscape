@@ -39,9 +39,8 @@ func TestSchool(t *testing.T) {
 
 	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
-			"name":    {"test"},
-			"address": {"idk"},
-			//info about admin is missing
+			"school_name": {"test"},
+			"city":        {"idk"},
 		})
 		if err != nil {
 			t.Error(err)
@@ -52,6 +51,42 @@ func TestSchool(t *testing.T) {
 		want := http.StatusBadRequest
 		if got != want {
 			t.Errorf("Got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("valid request creates school and admin account", func(t *testing.T) {
+		res, err := http.PostForm(register_url, url.Values{
+			"school_name":    {"test"},
+			"city":           {"idk"},
+			"zip_code":       {"123 45"},
+			"street_address": {"test 8"},
+			//admin info
+			"name":     {"test"},
+			"surname":  {"idk"},
+			"email":    {"random2@email.com"},
+			"password": {"test123456"},
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		defer res.Body.Close()
+
+		gotCode := res.StatusCode
+		wantCode := http.StatusCreated
+		if gotCode != wantCode {
+			t.Errorf("Got %d, want %d", gotCode, wantCode)
+		}
+
+		gotCookies := res.Cookies()
+
+		gotCookiesLen := len(gotCookies)
+		wantCookiesLen := 1
+		if gotCookiesLen != wantCookiesLen {
+			t.Errorf("Got %d cookies, wanted %d", gotCookiesLen, wantCookiesLen)
+		}
+
+		if gotCookies[0].Name != "token" || !gotCookies[0].HttpOnly || gotCookies[0].SameSite != http.SameSiteStrictMode {
+			t.Errorf("Got %s invalid cookie", gotCookies[0])
 		}
 	})
 }
