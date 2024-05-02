@@ -12,7 +12,7 @@ import (
 	i "github.com/dr0th3r/learnscape/internal"
 )
 
-func TestRegistration(t *testing.T) {
+func TestUser(t *testing.T) {
 	db_url := os.Getenv("DATABASE_URL")
 	db_name := "test_" + fmt.Sprint(rand.Int())
 	t.Setenv("DATABASE_NAME", db_name)
@@ -35,10 +35,11 @@ func TestRegistration(t *testing.T) {
 
 	waitForReady(ctx)
 
-	req_url := "http://localhost:8080/register_user"
+	register_url := "http://localhost:8080/register_user"
+	login_url := "http://localhost:8080/login"
 
 	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
-		res, err := http.PostForm(req_url, url.Values{
+		res, err := http.PostForm(register_url, url.Values{
 			"name":    {"test"},
 			"surname": {"idk"},
 			"email":   {"test@idk.com"},
@@ -57,7 +58,7 @@ func TestRegistration(t *testing.T) {
 	})
 
 	t.Run("invalid email is rejected", func(t *testing.T) {
-		res, err := http.PostForm(req_url, url.Values{
+		res, err := http.PostForm(register_url, url.Values{
 			"name":     {"test"},
 			"surname":  {"idk"},
 			"email":    {"invalid"},
@@ -76,7 +77,7 @@ func TestRegistration(t *testing.T) {
 	})
 
 	t.Run("invalid password is rejected", func(t *testing.T) {
-		res, err := http.PostForm(req_url, url.Values{
+		res, err := http.PostForm(register_url, url.Values{
 			"name":     {"test"},
 			"surname":  {"idk"},
 			"email":    {"random@email.com"},
@@ -95,7 +96,7 @@ func TestRegistration(t *testing.T) {
 	})
 
 	t.Run("valid user is created", func(t *testing.T) {
-		res, err := http.PostForm(req_url, url.Values{
+		res, err := http.PostForm(register_url, url.Values{
 			"name":     {"test"},
 			"surname":  {"idk"},
 			"email":    {"random2@email.com"},
@@ -108,6 +109,43 @@ func TestRegistration(t *testing.T) {
 
 		got := res.StatusCode
 		want := http.StatusCreated
+		if got != want {
+			t.Errorf("Got %d, want %d", got, want)
+		}
+	})
+
+	t.Run("user can register and log in", func(t *testing.T) {
+		email := "myuser@email.com"
+		password := "test123456"
+
+		res, err := http.PostForm(register_url, url.Values{
+			"name":     {"test"},
+			"surname":  {"idk"},
+			"email":    {email},
+			"password": {password}, //password is too short
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		defer res.Body.Close()
+
+		got := res.StatusCode
+		want := http.StatusCreated
+		if got != want {
+			t.Errorf("Got %d, want %d", got, want)
+		}
+
+		res, err = http.PostForm(login_url, url.Values{
+			"email":    {email},
+			"password": {password},
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		defer res.Body.Close()
+
+		got = res.StatusCode
+		want = http.StatusOK
 		if got != want {
 			t.Errorf("Got %d, want %d", got, want)
 		}
