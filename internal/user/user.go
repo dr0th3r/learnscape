@@ -32,7 +32,7 @@ func validatePassword(password string) error {
 	return nil
 }
 
-func parseRegister(f url.Values) (*User, error) {
+func ParseRegister(f url.Values) (*User, error) {
 	email, err := mail.ParseAddress(f.Get("email"))
 	if err != nil {
 		return nil, err
@@ -145,7 +145,7 @@ func HandleRegisterUser(db *pgxpool.Pool, rdb *redis.Client) http.Handler {
 				return
 			}
 
-			user, err := parseRegister(r.Form)
+			user, err := ParseRegister(r.Form)
 			if err != nil {
 				utils.HandleError(w, err, http.StatusBadRequest, "")
 				return

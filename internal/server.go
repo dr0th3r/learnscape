@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
+	"github.com/dr0th3r/learnscape/internal/school"
 	"github.com/dr0th3r/learnscape/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/redis/go-redis/v9"
@@ -24,4 +25,5 @@ func addRoutes(
 	mux.Handle("/health_check", hcheck.HandleHealthCheck())
 	mux.Handle("POST /register_user", user.HandleRegisterUser(db, rdb))
 	mux.Handle("POST /login", user.HandleLogin(db, rdb))
+	mux.Handle("POST /register_school", school.HandleRegisterSchool(db))
 }
