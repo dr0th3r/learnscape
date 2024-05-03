@@ -15,7 +15,6 @@ func NewServer(db *pgxpool.Pool) http.Handler {
 	addRoutes(mux, db)
 	var handler http.Handler = mux
 	handler = otelhttp.NewHandler(handler, "server")
-	//handler = Otel(handler)
 	return handler
 }
 
@@ -27,10 +26,4 @@ func addRoutes(
 	mux.Handle("POST /register_user", user.HandleRegisterUser(db))
 	mux.Handle("POST /login", user.HandleLogin(db))
 	mux.Handle("POST /register_school", school.HandleRegisterSchool(db))
-}
-
-func Otel(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		otelhttp.WithRouteTag(r.URL.Path, next)
-	})
 }

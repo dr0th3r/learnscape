@@ -12,6 +12,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	tracer = otel.Tracer("school")
 )
 
 type School struct {
@@ -22,7 +29,9 @@ type School struct {
 	street_address string
 }
 
-func parse(f url.Values) (*School, error) {
+func parse(f url.Values, ctx context.Context) (*School, error) {
+	span := trace.SpanFromContext(ctx)
+
 	school := School{
 		id:             uuid.NewString(),
 		name:           f.Get("school_name"),
@@ -30,6 +39,14 @@ func parse(f url.Values) (*School, error) {
 		zip_code:       f.Get("zip_code"),
 		street_address: f.Get("street_address"),
 	}
+
+	span.SetAttributes(
+		attribute.String("id", school.id),
+		attribute.String("name", school.name),
+		attribute.String("city", school.city),
+		attribute.String("zip code", school.zip_code),
+		attribute.String("street address", school.street_address),
+	)
 
 	if school.name == "" || school.city == "" || school.zip_code == "" || school.street_address == "" {
 		return nil, errors.New("Missing field(s)")
@@ -51,39 +68,50 @@ func (s *School) saveToDB(tx pgx.Tx) error {
 func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			ctx, span := tracer.Start(r.Context(), "register school")
+			defer span.End()
+
+			span.AddEvent("Starting to parse form data")
 			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing formdate")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing formdate", ctx)
 				return
 			}
 
-			school, err := parse(r.Form)
+			span.AddEvent("Starting to parse school from form data")
+			school, err := parse(r.Form, ctx)
 			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, err.Error())
+				utils.HandleError(w, err, http.StatusBadRequest, err.Error(), ctx)
 				return
 			}
-			admin, err := user.ParseRegister(r.Form)
+			span.AddEvent("Starting to parse admin from form data")
+			admin, err := user.ParseRegister(r.Form, ctx)
 			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, err.Error())
+				utils.HandleError(w, err, http.StatusBadRequest, err.Error(), ctx)
 				return
 			}
 
+			span.AddEvent("Starting database transaction")
 			tx, err := db.Begin(context.Background())
-			defer tx.Rollback(context.Background())
 			if err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
+			defer tx.Rollback(context.Background())
+			span.AddEvent("Starting to save school to database")
 			if err := school.saveToDB(tx); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
+			span.AddEvent("Starting to save admin to database")
 			if err := admin.SaveToDB(tx); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
+			span.AddEvent("Starting to commit transaction to database")
 			if err := tx.Commit(context.Background()); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
 
+			span.AddEvent("Starting to set jwt token for admin")
 			if err := admin.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
 			}
 
 			w.WriteHeader(http.StatusCreated)

@@ -72,8 +72,6 @@ func newTraceProvider() (*trace.TracerProvider, error) {
 		return nil, err
 	}
 
-	/*traceExporter, err := stdouttrace.New(
-	stdouttrace.WithPrettyPrint())*/
 	traceExporter, err := otlptracehttp.New(context.Background())
 
 	if err != nil {

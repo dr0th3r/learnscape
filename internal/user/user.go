@@ -15,6 +15,13 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+var (
+	tracer = otel.Tracer("user")
 )
 
 type User struct {
@@ -33,7 +40,9 @@ func validatePassword(password string) error {
 	return nil
 }
 
-func ParseRegister(f url.Values) (*User, error) {
+func ParseRegister(f url.Values, ctx context.Context) (*User, error) {
+	span := trace.SpanFromContext(ctx)
+
 	email, err := mail.ParseAddress(f.Get("email"))
 	if err != nil {
 		return nil, err
@@ -51,6 +60,13 @@ func ParseRegister(f url.Values) (*User, error) {
 		password: password,
 	}
 
+	span.SetAttributes(
+		attribute.String("id", user.id),
+		attribute.String("name", user.name),
+		attribute.String("surname", user.surname),
+		attribute.String("email", user.email),
+	)
+
 	if user.name == "" || user.surname == "" || user.email == "" || user.password == "" {
 		return nil, errors.New("Missing field(s)")
 	}
@@ -58,7 +74,9 @@ func ParseRegister(f url.Values) (*User, error) {
 	return &user, nil
 }
 
-func parseLogin(f url.Values) (*User, error) {
+func parseLogin(f url.Values, ctx context.Context) (*User, error) {
+	span := trace.SpanFromContext(ctx)
+
 	email, err := mail.ParseAddress(f.Get("email"))
 	if err != nil {
 		return nil, err
@@ -72,6 +90,9 @@ func parseLogin(f url.Values) (*User, error) {
 		email:    email.Address,
 		password: password,
 	}
+	span.SetAttributes(
+		attribute.String("email", user.email),
+	)
 
 	if user.email == "" || user.password == "" {
 		return nil, errors.New("Missing field(s)")
@@ -141,22 +162,29 @@ func (u *User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) err
 func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			ctx, span := tracer.Start(r.Context(), "user registration")
+			defer span.End()
+
+			span.AddEvent("Starting to parse form data")
 			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
 				return
 			}
 
-			user, err := ParseRegister(r.Form)
+			span.AddEvent("Staring to parse user from form data")
+			user, err := ParseRegister(r.Form, ctx)
 			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "")
+				utils.HandleError(w, err, http.StatusBadRequest, "", ctx)
 				return
 			}
 
+			span.AddEvent("Start database transaction")
 			tx, err := db.Begin(context.Background()) //tx is necessary becuase this is not the only endpoint using SveToDB
 			if err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
 			defer tx.Rollback(context.Background())
+			span.AddEvent("Save user to database")
 			if err := user.SaveToDB(tx); err != nil {
 				var code int
 				var msg string
@@ -170,15 +198,17 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 					msg = "Failed to save user to db"
 				}
 
-				utils.HandleError(w, err, code, msg)
+				utils.HandleError(w, err, code, msg, ctx)
 				return
 			}
+			span.AddEvent("Commit database transaction")
 			if err := tx.Commit(context.Background()); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "")
+				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
 
+			span.AddEvent("Set user jwt token")
 			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
 			}
 
 			w.WriteHeader(http.StatusCreated)
@@ -189,24 +219,31 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 func HandleLogin(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			ctx, span := tracer.Start(r.Context(), "user login")
+			defer span.End()
+
+			span.AddEvent("Starting to parse form data")
 			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
 				return
 			}
 
-			user, err := parseLogin(r.Form)
+			span.AddEvent("Staring to parse user from form data")
+			user, err := parseLogin(r.Form, ctx)
 			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "")
+				utils.HandleError(w, err, http.StatusBadRequest, "", ctx)
 				return
 			}
 
+			span.AddEvent("Log user in")
 			if err := user.login(db); err != nil {
-				utils.HandleError(w, err, http.StatusUnauthorized, "Failed to log user in")
+				utils.HandleError(w, err, http.StatusUnauthorized, "Failed to log user in", ctx)
 				return
 			}
 
+			span.AddEvent("Set user jwt")
 			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt")
+				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
 			}
 		},
 	)
