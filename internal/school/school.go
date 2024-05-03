@@ -99,19 +99,23 @@ func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 			span.AddEvent("Starting to save school to database")
 			if err := school.saveToDB(tx); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+				return
 			}
 			span.AddEvent("Starting to save admin to database")
 			if err := admin.SaveToDB(tx); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+				return
 			}
 			span.AddEvent("Starting to commit transaction to database")
 			if err := tx.Commit(context.Background()); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+				return
 			}
 
 			span.AddEvent("Starting to set jwt token for admin")
 			if err := admin.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
+				return
 			}
 
 			w.WriteHeader(http.StatusCreated)

@@ -182,6 +182,7 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 			tx, err := db.Begin(context.Background()) //tx is necessary becuase this is not the only endpoint using SveToDB
 			if err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+				return
 			}
 			defer tx.Rollback(context.Background())
 			span.AddEvent("Save user to database")
@@ -204,11 +205,13 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 			span.AddEvent("Commit database transaction")
 			if err := tx.Commit(context.Background()); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+				return
 			}
 
 			span.AddEvent("Set user jwt token")
 			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
+				return
 			}
 
 			w.WriteHeader(http.StatusCreated)
