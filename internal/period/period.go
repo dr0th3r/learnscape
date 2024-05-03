@@ -2,6 +2,7 @@ package period
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -97,7 +99,19 @@ func HandleCreatePeriod(db *pgxpool.Pool) http.Handler {
 			defer tx.Rollback(context.Background())
 			span.AddEvent("Starting to save period to database")
 			if err := period.SaveToDB(tx); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx) //TODO: add checking if the error wasn't caused by overlap later
+				var code int
+				var msg string
+
+				var pgErr *pgconn.PgError
+				if errors.As(err, &pgErr) {
+					code = http.StatusBadRequest
+					msg = "Data is invalid" //TODO: add better error messages later
+				} else {
+					code = http.StatusInternalServerError
+					msg = "Internal server error"
+				}
+
+				utils.HandleError(w, err, code, msg, ctx)
 				return
 			}
 			span.AddEvent("Starting to commit database transaction")
