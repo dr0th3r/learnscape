@@ -5,6 +5,7 @@ import (
 
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
 	"github.com/dr0th3r/learnscape/internal/period"
+	"github.com/dr0th3r/learnscape/internal/room"
 	"github.com/dr0th3r/learnscape/internal/school"
 	"github.com/dr0th3r/learnscape/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,4 +29,5 @@ func addRoutes(
 	mux.Handle("POST /login", user.HandleLogin(db))
 	mux.Handle("POST /register_school", school.HandleRegisterSchool(db))
 	mux.Handle("POST /period", period.HandleCreatePeriod(db))
+	mux.Handle("POST /room", room.HandleCreateRoom(db))
 }

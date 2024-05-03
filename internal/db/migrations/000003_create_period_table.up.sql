@@ -14,5 +14,3 @@ CREATE TABLE IF NOT EXISTS period (
 	span TIMERANGE NOT NULL,
 	EXCLUDE USING gist (school_id WITH =, span WITH &&)
 );
-
-

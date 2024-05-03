@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -74,4 +75,26 @@ func waitForReady(ctx context.Context) error {
 			time.Sleep(250 * time.Millisecond)
 		}
 	}
+}
+
+func createSchool(db *pgx.Conn) (string, error) {
+	id := uuid.NewString()
+	_, err := db.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
+		id, "test", "test city", "123 45", "street 7",
+	)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
+}
+
+func createUser(db *pgx.Conn) (string, error) {
+	id := uuid.NewString()
+	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
+		id, "test", "idk", "test@idk.com", "testidk123",
+	)
+	if err != nil {
+		return "", err
+	}
+	return id, nil
 }

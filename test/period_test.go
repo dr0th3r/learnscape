@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	i "github.com/dr0th3r/learnscape/internal"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -122,15 +121,4 @@ func TestPeriod(t *testing.T) {
 		}
 	})
 
-}
-
-func createSchool(db *pgx.Conn) (string, error) {
-	id := uuid.NewString()
-	_, err := db.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
-		id, "test", "test city", "123 45", "street 7",
-	)
-	if err != nil {
-		return "", err
-	}
-	return id, nil
 }
