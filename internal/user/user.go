@@ -40,16 +40,17 @@ func validatePassword(password string) error {
 	return nil
 }
 
-func ParseRegister(f url.Values, ctx context.Context) (*User, error) {
-	span := trace.SpanFromContext(ctx)
+func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+	span := trace.SpanFromContext(parserCtx)
+	span.AddEvent("Parsing user")
 
 	email, err := mail.ParseAddress(f.Get("email"))
 	if err != nil {
-		return nil, err
+		return utils.NewParserError(err, "Invalid email provided")
 	}
 	password := f.Get("password")
 	if err := validatePassword(password); err != nil {
-		return nil, err
+		return utils.NewParserError(err, "Invalid password provided")
 	}
 
 	user := User{
@@ -67,23 +68,30 @@ func ParseRegister(f url.Values, ctx context.Context) (*User, error) {
 		attribute.String("email", user.email),
 	)
 
-	if user.name == "" || user.surname == "" || user.email == "" || user.password == "" {
-		return nil, errors.New("Missing field(s)")
+	if user.name == "" {
+		return utils.NewParserError(nil, "Username not provided") //nil means use msg as error
 	}
 
-	return &user, nil
+	if user.name == "" || user.surname == "" || user.email == "" || user.password == "" {
+		return utils.NewParserError(nil, "Surname not provided")
+	}
+
+	*handlerCtx = context.WithValue(*handlerCtx, "user", user)
+
+	return nil
 }
 
-func parseLogin(f url.Values, ctx context.Context) (*User, error) {
-	span := trace.SpanFromContext(ctx)
+func ParseLogin(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+	span := trace.SpanFromContext(parserCtx)
+	span.AddEvent("Parsing user")
 
 	email, err := mail.ParseAddress(f.Get("email"))
 	if err != nil {
-		return nil, err
+		return utils.NewParserError(err, "Invalid email provided")
 	}
 	password := f.Get("password")
 	if err := validatePassword(password); err != nil {
-		return nil, err
+		return utils.NewParserError(err, "Invalid password provided")
 	}
 
 	user := User{
@@ -94,14 +102,12 @@ func parseLogin(f url.Values, ctx context.Context) (*User, error) {
 		attribute.String("email", user.email),
 	)
 
-	if user.email == "" || user.password == "" {
-		return nil, errors.New("Missing field(s)")
-	}
+	*handlerCtx = context.WithValue(*handlerCtx, "user", user)
 
-	return &user, nil
+	return nil
 }
 
-func (u *User) SaveToDB(tx pgx.Tx) error {
+func (u User) SaveToDB(tx pgx.Tx) error {
 	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
 
 	_, err = tx.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
@@ -113,7 +119,7 @@ func (u *User) SaveToDB(tx pgx.Tx) error {
 	return nil
 }
 
-func (u *User) login(db *pgxpool.Pool) error {
+func (u User) login(db *pgxpool.Pool) error {
 	ctx := context.Background()
 
 	var dbPassword string
@@ -132,7 +138,7 @@ func (u *User) login(db *pgxpool.Pool) error {
 	return nil
 }
 
-func (u *User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
+func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		jwt.MapClaims{
 			"id":      u.id,
@@ -162,21 +168,11 @@ func (u *User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) err
 func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "user registration")
+			reqCtx := r.Context()
+			ctx, span := tracer.Start(reqCtx, "user registration")
 			defer span.End()
 
-			span.AddEvent("Starting to parse form data")
-			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
-				return
-			}
-
-			span.AddEvent("Staring to parse user from form data")
-			user, err := ParseRegister(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "", ctx)
-				return
-			}
+			user := reqCtx.Value("user").(User)
 
 			if err := utils.HandleTx(ctx, db, user.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError
@@ -202,21 +198,11 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 func HandleLogin(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "user login")
+			reqCtx := r.Context()
+			ctx, span := tracer.Start(reqCtx, "user login")
 			defer span.End()
 
-			span.AddEvent("Starting to parse form data")
-			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
-				return
-			}
-
-			span.AddEvent("Staring to parse user from form data")
-			user, err := parseLogin(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "", ctx)
-				return
-			}
+			user := reqCtx.Value("user").(User)
 
 			span.AddEvent("Log user in")
 			if err := user.login(db); err != nil {

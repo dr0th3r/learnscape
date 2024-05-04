@@ -2,7 +2,6 @@ package school
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -29,8 +28,9 @@ type School struct {
 	street_address string
 }
 
-func parse(f url.Values, ctx context.Context) (*School, error) {
-	span := trace.SpanFromContext(ctx)
+func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+	span := trace.SpanFromContext(parserCtx)
+	span.AddEvent("Parsing school")
 
 	school := School{
 		id:             uuid.NewString(),
@@ -48,14 +48,22 @@ func parse(f url.Values, ctx context.Context) (*School, error) {
 		attribute.String("street address", school.street_address),
 	)
 
-	if school.name == "" || school.city == "" || school.zip_code == "" || school.street_address == "" {
-		return nil, errors.New("Missing field(s)")
+	if school.name == "" {
+		return utils.NewParserError(nil, "Name not provided")
+	} else if school.city == "" {
+		return utils.NewParserError(nil, "City not provided")
+	} else if school.zip_code == "" {
+		return utils.NewParserError(nil, "Zip code not provided")
+	} else if school.street_address == "" {
+		return utils.NewParserError(nil, "Street address not provided")
 	}
 
-	return &school, nil
+	*handlerCtx = context.WithValue(*handlerCtx, "school", school)
+
+	return nil
 }
 
-func (s *School) saveToDB(tx pgx.Tx) error {
+func (s School) saveToDB(tx pgx.Tx) error {
 	_, err := tx.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
 		s.id, s.name, s.city, s.zip_code, s.street_address,
 	)
@@ -68,27 +76,12 @@ func (s *School) saveToDB(tx pgx.Tx) error {
 func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "register school")
+			reqCtx := r.Context()
+			ctx, span := tracer.Start(reqCtx, "register school")
 			defer span.End()
 
-			span.AddEvent("Starting to parse form data")
-			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing formdate", ctx)
-				return
-			}
-
-			span.AddEvent("Starting to parse school from form data")
-			school, err := parse(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, err.Error(), ctx)
-				return
-			}
-			span.AddEvent("Starting to parse admin from form data")
-			admin, err := user.ParseRegister(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, err.Error(), ctx)
-				return
-			}
+			school := reqCtx.Value("school").(School)
+			admin := reqCtx.Value("user").(user.User)
 
 			if err := utils.HandleTx(ctx, db, school.saveToDB, admin.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)

@@ -2,7 +2,6 @@ package subject
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"net/url"
 
@@ -24,8 +23,9 @@ type Subject struct {
 	mandatory bool
 }
 
-func Parse(f url.Values, ctx context.Context) (Subject, error) {
-	span := trace.SpanFromContext(ctx)
+func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+	span := trace.SpanFromContext(parserCtx)
+	span.AddEvent("Parsing subject")
 
 	mandatory := true
 	if f.Get("mandatory") == "false" {
@@ -43,10 +43,12 @@ func Parse(f url.Values, ctx context.Context) (Subject, error) {
 	)
 
 	if subject.name == "" {
-		return Subject{}, errors.New("Missing field(s)")
+		return utils.NewParserError(nil, "Subject name not provided")
 	}
 
-	return subject, nil
+	*handlerCtx = context.WithValue(*handlerCtx, "subject", subject)
+
+	return nil
 }
 
 func (s Subject) SaveToDB(tx pgx.Tx) error {
@@ -60,21 +62,11 @@ func (s Subject) SaveToDB(tx pgx.Tx) error {
 func HandleCreateSubject(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "subject creation")
+			reqCtx := r.Context()
+			ctx, span := tracer.Start(reqCtx, "subject creation")
 			defer span.End()
 
-			span.AddEvent("Starting to parse form data")
-			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
-				return
-			}
-
-			span.AddEvent("Starting to parse subject from form data")
-			subject, err := Parse(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "Invalid subject", ctx)
-				return
-			}
+			subject := reqCtx.Value("subject").(Subject)
 
 			if err := utils.HandleTx(ctx, db, subject.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)

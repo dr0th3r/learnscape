@@ -9,14 +9,12 @@ import (
 	"go.opentelemetry.io/otel"
 )
 
-var (
-	tracer = otel.Tracer("transaction")
-)
+var tracerTransaction = otel.Tracer("transaction")
 
-type TxFunc func(pgx.Tx) error
+type txFunc func(pgx.Tx) error
 
-func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs ...TxFunc) error {
-	_, span := tracer.Start(ctx, "handle db transaction")
+func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs ...txFunc) error {
+	_, span := tracerTransaction.Start(ctx, "handle db transaction")
 	defer span.End()
 
 	span.AddEvent("Starting database transaction")

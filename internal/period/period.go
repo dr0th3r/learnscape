@@ -29,35 +29,38 @@ type Period struct {
 	end       string
 }
 
-func Parse(f url.Values, ctx context.Context) (Period, error) {
-	span := trace.SpanFromContext(ctx)
+func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+	span := trace.SpanFromContext(parserCtx)
+	span.AddEvent("Parsing period")
 
 	school_id, err := uuid.Parse(f.Get("school_id"))
 	if err != nil {
-		return Period{}, err
+		return utils.NewParserError(err, "Invalid school id")
 	}
 	span.SetAttributes(attribute.String("school_id", school_id.String()))
 
 	start := f.Get("start")
 	_, err = time.Parse(time.TimeOnly, start)
 	if err != nil {
-		return Period{}, err
+		return utils.NewParserError(err, "Invalid start time")
 	}
 	span.SetAttributes(attribute.String("start", start))
 
 	end := f.Get("end")
 	_, err = time.Parse(time.TimeOnly, end)
 	if err != nil {
-		return Period{}, err
+		return utils.NewParserError(err, "Invalid end time")
 	}
 	span.SetAttributes(attribute.String("end", end))
 
-	return Period{
+	*handlerCtx = context.WithValue(*handlerCtx, "period", Period{
 		id:        -1,
 		school_id: school_id,
 		start:     start,
 		end:       end,
-	}, nil
+	})
+
+	return nil
 }
 
 func (p Period) SaveToDB(tx pgx.Tx) error {
@@ -74,21 +77,11 @@ func (p Period) SaveToDB(tx pgx.Tx) error {
 func HandleCreatePeriod(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
-			ctx, span := tracer.Start(r.Context(), "period creation")
+			reqCtx := r.Context()
+			ctx, span := tracer.Start(reqCtx, "period creation")
 			defer span.End()
 
-			span.AddEvent("Starting to parse form data")
-			if err := r.ParseForm(); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error parsing form data", ctx)
-				return
-			}
-
-			span.AddEvent("Starting to parse period from form data")
-			period, err := Parse(r.Form, ctx)
-			if err != nil {
-				utils.HandleError(w, err, http.StatusBadRequest, "Invalid period", ctx)
-				return
-			}
+			period := reqCtx.Value("period").(Period)
 
 			if err := utils.HandleTx(ctx, db, period.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError
