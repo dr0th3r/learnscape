@@ -8,6 +8,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/room"
 	"github.com/dr0th3r/learnscape/internal/school"
 	"github.com/dr0th3r/learnscape/internal/subject"
+	"github.com/dr0th3r/learnscape/internal/timetable"
 	"github.com/dr0th3r/learnscape/internal/user"
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -45,5 +46,8 @@ func addRoutes(
 	))
 	mux.Handle("POST /subject", utils.ParseForm(
 		subject.HandleCreateSubject(db), subject.Parse,
+	))
+	mux.Handle("POST /regular_timetable", utils.ParseForm(
+		timetable.HandleCreateRegularTimetable(db), timetable.ParseRegularTimetable,
 	))
 }

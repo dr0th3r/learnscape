@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -96,5 +97,38 @@ func createUser(db *pgx.Conn) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	return id, nil
+}
+
+func createPeriod(db *pgx.Conn, schoolId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(), "insert into period (id, school_id, span) values ($1, $2, $3)", id, schoolId, "[8:00:00, 8:45:00]")
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+func createSubject(db *pgx.Conn) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(), "insert into subject (id, name) values ($1, $2)", id, "Math")
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
+
+func createRoom(db *pgx.Conn, teacherId string, schoolId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(), "insert into room (id, name, teacher_id, school_id) values ($1, $2, $3, $4)", id, "Labs", teacherId, schoolId)
+	if err != nil {
+		return "", err
+	}
+
 	return id, nil
 }
