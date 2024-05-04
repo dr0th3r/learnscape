@@ -9,7 +9,6 @@ import (
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -82,33 +81,9 @@ func HandleCreateRoom(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			span.AddEvent("Starting database transaction")
-			tx, err := db.Begin(context.Background())
-			if err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
-				return
-			}
-			defer tx.Rollback(context.Background())
-			span.AddEvent("Starting to save room to database")
-			if err := room.SaveToDB(tx); err != nil {
-				var code int
-				var msg string
-
-				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) {
-					code = http.StatusBadRequest
-					msg = "Data is invalid" //TODO: add better error messages later
-				} else {
-					code = http.StatusInternalServerError
-					msg = "Internal server error"
-				}
-
-				utils.HandleError(w, err, code, msg, ctx)
-				return
-			}
-			span.AddEvent("Starting to commit database transaction")
-			if err := tx.Commit(context.Background()); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
+			if err := utils.HandleTx(ctx, db, []utils.TxFunc{room.SaveToDB}); err != nil {
+				utils.UnexpectedError(w, err, ctx)
+				//TODO: add handling for invalid foreign keys later
 			}
 
 			w.WriteHeader(http.StatusCreated)

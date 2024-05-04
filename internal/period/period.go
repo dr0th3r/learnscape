@@ -90,33 +90,15 @@ func HandleCreatePeriod(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			span.AddEvent("Starting database transaction")
-			tx, err := db.Begin(context.Background())
-			if err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
-				return
-			}
-			defer tx.Rollback(context.Background())
-			span.AddEvent("Starting to save period to database")
-			if err := period.SaveToDB(tx); err != nil {
-				var code int
-				var msg string
-
+			if err := utils.HandleTx(ctx, db, []utils.TxFunc{period.SaveToDB}); err != nil {
 				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) {
-					code = http.StatusBadRequest
-					msg = "Data is invalid" //TODO: add better error messages later
+				if errors.As(err, &pgErr) && pgErr.Code == "22000" {
+					utils.HandleError(w, err, http.StatusBadRequest, "Period times overlap or start is before end", ctx)
 				} else {
-					code = http.StatusInternalServerError
-					msg = "Internal server error"
+					utils.UnexpectedError(w, err, ctx)
 				}
 
-				utils.HandleError(w, err, code, msg, ctx)
 				return
-			}
-			span.AddEvent("Starting to commit database transaction")
-			if err := tx.Commit(context.Background()); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
 			}
 
 			w.WriteHeader(http.StatusCreated)

@@ -7,6 +7,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/period"
 	"github.com/dr0th3r/learnscape/internal/room"
 	"github.com/dr0th3r/learnscape/internal/school"
+	"github.com/dr0th3r/learnscape/internal/subject"
 	"github.com/dr0th3r/learnscape/internal/user"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -30,4 +31,5 @@ func addRoutes(
 	mux.Handle("POST /register_school", school.HandleRegisterSchool(db))
 	mux.Handle("POST /period", period.HandleCreatePeriod(db))
 	mux.Handle("POST /room", room.HandleCreateRoom(db))
+	mux.Handle("POST /subject", subject.HandleCreateSubject(db))
 }

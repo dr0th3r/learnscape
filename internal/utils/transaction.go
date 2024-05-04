@@ -13,9 +13,9 @@ var (
 	tracer = otel.Tracer("transaction")
 )
 
-type txFunc func(context.Context, pgx.Tx) error
+type TxFunc func(pgx.Tx) error
 
-func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs []txFunc) error {
+func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs []TxFunc) error {
 	_, span := tracer.Start(ctx, "handle db transaction")
 	defer span.End()
 
@@ -28,7 +28,7 @@ func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs []txFunc) error {
 
 	for i, f := range txFuncs {
 		span.AddEvent(fmt.Sprintf("Executing function: %d", i))
-		if err := f(ctx, tx); err != nil {
+		if err := f(tx); err != nil {
 			return err
 		}
 	}
