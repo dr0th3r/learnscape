@@ -76,7 +76,7 @@ func HandleCreateSubject(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := utils.HandleTx(ctx, db, []utils.TxFunc{subject.SaveToDB}); err != nil {
+			if err := utils.HandleTx(ctx, db, subject.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)
 				return
 			}

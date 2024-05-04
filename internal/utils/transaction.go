@@ -15,7 +15,7 @@ var (
 
 type TxFunc func(pgx.Tx) error
 
-func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs []TxFunc) error {
+func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs ...TxFunc) error {
 	_, span := tracer.Start(ctx, "handle db transaction")
 	defer span.End()
 

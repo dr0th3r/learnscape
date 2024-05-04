@@ -178,36 +178,7 @@ func HandleRegisterUser(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			/*span.AddEvent("Start database transaction")
-			tx, err := db.Begin(context.Background()) //tx is necessary becuase this is not the only endpoint using SveToDB
-			if err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
-				return
-			}
-			defer tx.Rollback(context.Background())
-			span.AddEvent("Save user to database")
-			if err := user.SaveToDB(tx); err != nil {
-				var code int
-				var msg string
-
-				var pgErr *pgconn.PgError
-				if errors.As(err, &pgErr) && pgErr.Code == "23505" {
-					code = http.StatusConflict
-					msg = "Email already registered"
-				} else {
-					code = http.StatusInternalServerError
-					msg = "Failed to save user to db"
-				}
-
-				utils.HandleError(w, err, code, msg, ctx)
-				return
-			}
-			span.AddEvent("Commit database transaction")
-			if err := tx.Commit(context.Background()); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "", ctx)
-				return
-			}*/
-			if err := utils.HandleTx(ctx, db, []utils.TxFunc{user.SaveToDB}); err != nil {
+			if err := utils.HandleTx(ctx, db, user.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) && pgErr.Code == "23505" {
 					utils.HandleError(w, err, http.StatusConflict, "Email already registered", ctx)

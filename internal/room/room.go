@@ -81,7 +81,7 @@ func HandleCreateRoom(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := utils.HandleTx(ctx, db, []utils.TxFunc{room.SaveToDB}); err != nil {
+			if err := utils.HandleTx(ctx, db, room.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)
 				//TODO: add handling for invalid foreign keys later
 			}

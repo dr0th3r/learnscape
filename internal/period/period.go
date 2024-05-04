@@ -90,7 +90,7 @@ func HandleCreatePeriod(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := utils.HandleTx(ctx, db, []utils.TxFunc{period.SaveToDB}); err != nil {
+			if err := utils.HandleTx(ctx, db, period.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) && pgErr.Code == "22000" {
 					utils.HandleError(w, err, http.StatusBadRequest, "Period times overlap or start is before end", ctx)

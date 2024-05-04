@@ -90,7 +90,7 @@ func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			if err := utils.HandleTx(ctx, db, []utils.TxFunc{school.saveToDB, admin.SaveToDB}); err != nil {
+			if err := utils.HandleTx(ctx, db, school.saveToDB, admin.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)
 			}
 
