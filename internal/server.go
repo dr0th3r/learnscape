@@ -5,6 +5,7 @@ import (
 
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
 	"github.com/dr0th3r/learnscape/internal/period"
+	"github.com/dr0th3r/learnscape/internal/report"
 	"github.com/dr0th3r/learnscape/internal/room"
 	"github.com/dr0th3r/learnscape/internal/school"
 	"github.com/dr0th3r/learnscape/internal/subject"
@@ -49,5 +50,8 @@ func addRoutes(
 	))
 	mux.Handle("POST /regular_timetable", utils.ParseForm(
 		timetable.HandleCreateRegularTimetable(db), timetable.ParseRegularTimetable,
+	))
+	mux.Handle("POST /regular_report", utils.ParseForm(
+		report.HandleCreateRegularReport(db), report.ParseRegularReport,
 	))
 }

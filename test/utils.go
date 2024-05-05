@@ -132,3 +132,19 @@ func createRoom(db *pgx.Conn, teacherId string, schoolId string) (string, error)
 
 	return id, nil
 }
+
+func createRegularTimetable(db *pgx.Conn, periodId, subjectId, schoolId, roomId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(),
+		`insert into regular_timetable (id, period_id, subject_id, school_id, room_id, weekday)
+		values($1, $2, $3, $4, $5, $6)`,
+		id, periodId, subjectId, schoolId, roomId, "Po",
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
