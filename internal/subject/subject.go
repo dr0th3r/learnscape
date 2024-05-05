@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/jackc/pgx/v5"
@@ -29,9 +28,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing subject")
 
-	schoolIdUnprocessed := f.Get("school_id")
-	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
-	schoolId, err := strconv.Atoi(f.Get("school_id"))
+	schoolId, err := utils.ParseInt(span, "school_id", f.Get("school_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
@@ -49,7 +46,6 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	}
 	span.SetAttributes(
 		attribute.String("name", subject.name),
-		attribute.Int("school_id", subject.schoolId),
 		attribute.Bool("mandatory", subject.mandatory),
 	)
 

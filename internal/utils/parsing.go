@@ -4,8 +4,11 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
 )
 
 var tracerParser = otel.Tracer("parser")
@@ -53,4 +56,18 @@ func ParseForm(next http.Handler, parserFuncs ...parserFunc) http.Handler {
 
 		next.ServeHTTP(w, req)
 	})
+}
+
+func ParseInt(span trace.Span, key, value string) (int, error) {
+	intValue, err := strconv.Atoi(value)
+	span.SetAttributes(
+		attribute.String(key+"_unprocessed", value),
+		attribute.Int(key, intValue),
+	)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return intValue, nil
 }

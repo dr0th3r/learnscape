@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
@@ -33,29 +32,30 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing period")
 
-	schoolIdUnprocessed := f.Get("school_id")
-	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
-	schoolId, err := strconv.Atoi(schoolIdUnprocessed)
+	schoolId, err := utils.ParseInt(span, "school_id", f.Get("school_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
-	span.SetAttributes(attribute.Int("school_id", schoolId))
 
 	start := f.Get("start")
-	span.SetAttributes(attribute.String("start_unprocessed", start))
 	_, err = time.Parse(time.TimeOnly, start)
+	span.SetAttributes(
+		attribute.String("start_unprocessed", start),
+		attribute.String("start", start),
+	)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
 	}
-	span.SetAttributes(attribute.String("start", start))
 
 	end := f.Get("end")
-	span.SetAttributes(attribute.String("end_unprocessed", end))
 	_, err = time.Parse(time.TimeOnly, end)
+	span.SetAttributes(
+		attribute.String("end_unprocessed", end),
+		attribute.String("end", end),
+	)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid end time")
 	}
-	span.SetAttributes(attribute.String("end", end))
 
 	*handlerCtx = context.WithValue(*handlerCtx, "period", Period{
 		id:       -1,

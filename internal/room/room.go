@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/google/uuid"
@@ -30,24 +29,22 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing room")
 
-	schoolIdUnprocessed := f.Get("school_id")
-	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
-	schoolId, err := strconv.Atoi(f.Get("school_id"))
+	schoolId, err := utils.ParseInt(span, "school_id", f.Get("school_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
-	span.SetAttributes(attribute.Int("school_id", schoolId))
-
 	teacherIdUnprocessed := f.Get("teacher_id")
-	span.SetAttributes(attribute.String("teacher_id_unprocessed", teacherIdUnprocessed))
 	teacherId, err := uuid.Parse(teacherIdUnprocessed)
+	span.SetAttributes(
+		attribute.String("teacher_id_unprocessed", teacherIdUnprocessed),
+		attribute.String("teacher_id", teacherId.String()),
+	)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid teacher id")
 	}
-	span.SetAttributes(attribute.String("teacher_id", teacherId.String()))
-
 	name := f.Get("name")
 	span.SetAttributes(attribute.String("name", name))
+
 	if name == "" {
 		return utils.NewParserError(nil, "Name not provided")
 	}

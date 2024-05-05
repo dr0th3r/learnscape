@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"strconv"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/jackc/pgx/v5"
@@ -51,37 +50,22 @@ func ParseRegularTimetable(f url.Values, parserCtx context.Context, handlerCtx *
 		return utils.NewParserError(nil, "Invalid weekday")
 	}
 
-	periodIdUnprocessed := f.Get("period_id")
-	span.SetAttributes(attribute.String("period_id_unprocessed", periodIdUnprocessed))
-	periodId, err := strconv.Atoi(periodIdUnprocessed)
+	periodId, err := utils.ParseInt(span, "period_id", f.Get("period_id"))
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid period id (not convertable to int)")
 	}
-	span.SetAttributes(attribute.Int("period_id", periodId))
-
-	subjectIdUnprocessed := f.Get("subject_id")
-	span.SetAttributes(attribute.String("subject_id_unprocessed", subjectIdUnprocessed))
-	subjectId, err := strconv.Atoi(subjectIdUnprocessed)
+	subjectId, err := utils.ParseInt(span, "subject_id", f.Get("subject_id"))
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid subject id (not convertable to int)")
 	}
-	span.SetAttributes(attribute.Int("subject_id", subjectId))
-
-	roomIdUnprocessed := f.Get("room_id")
-	span.SetAttributes(attribute.String("room_id_unprocessed", roomIdUnprocessed))
-	roomId, err := strconv.Atoi(roomIdUnprocessed)
+	roomId, err := utils.ParseInt(span, "room_id", f.Get("room_id"))
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid room id (not convertable to int)")
 	}
-	span.SetAttributes(attribute.Int("room_id", roomId))
-
-	schoolIdUnprocessed := f.Get("school_id")
-	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
-	schoolId, err := strconv.Atoi(schoolIdUnprocessed)
+	schoolId, err := utils.ParseInt(span, "school_id", f.Get("school_id"))
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid school id (not convertable to int)")
 	}
-	span.SetAttributes(attribute.Int("school_id", schoolId))
 
 	span.SetAttributes(
 		attribute.Int("period id", periodId),
