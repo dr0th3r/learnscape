@@ -8,7 +8,6 @@ import (
 
 	"github.com/dr0th3r/learnscape/internal/user"
 	"github.com/dr0th3r/learnscape/internal/utils"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
@@ -21,11 +20,11 @@ var (
 )
 
 type School struct {
-	id             string
-	name           string
-	city           string
-	zip_code       string
-	street_address string
+	id            int
+	name          string
+	city          string
+	zip_code      string
+	streetAddress string
 }
 
 func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
@@ -33,19 +32,19 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span.AddEvent("Parsing school")
 
 	school := School{
-		id:             uuid.NewString(),
-		name:           f.Get("school_name"),
-		city:           f.Get("city"),
-		zip_code:       f.Get("zip_code"),
-		street_address: f.Get("street_address"),
+		id:            -1,
+		name:          f.Get("school_name"),
+		city:          f.Get("city"),
+		zip_code:      f.Get("zip_code"),
+		streetAddress: f.Get("street_address"),
 	}
 
 	span.SetAttributes(
-		attribute.String("id", school.id),
+		attribute.Int("id", school.id),
 		attribute.String("name", school.name),
 		attribute.String("city", school.city),
 		attribute.String("zip code", school.zip_code),
-		attribute.String("street address", school.street_address),
+		attribute.String("street address", school.streetAddress),
 	)
 
 	if school.name == "" {
@@ -54,7 +53,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 		return utils.NewParserError(nil, "City not provided")
 	} else if school.zip_code == "" {
 		return utils.NewParserError(nil, "Zip code not provided")
-	} else if school.street_address == "" {
+	} else if school.streetAddress == "" {
 		return utils.NewParserError(nil, "Street address not provided")
 	}
 
@@ -64,8 +63,8 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 }
 
 func (s School) saveToDB(tx pgx.Tx) error {
-	_, err := tx.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
-		s.id, s.name, s.city, s.zip_code, s.street_address,
+	_, err := tx.Exec(context.Background(), "insert into school (name, city, zip_code, street_address) values ($1, $2, $3, $4)",
+		s.name, s.city, s.zip_code, s.streetAddress,
 	)
 	if err != nil {
 		return err

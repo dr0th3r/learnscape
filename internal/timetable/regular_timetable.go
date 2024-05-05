@@ -23,6 +23,7 @@ type RegularTimetable struct {
 	periodId  int
 	subjectId int
 	roomId    int
+	schoolId  int
 	weekday   string
 }
 
@@ -50,24 +51,52 @@ func ParseRegularTimetable(f url.Values, parserCtx context.Context, handlerCtx *
 		return utils.NewParserError(nil, "Invalid weekday")
 	}
 
-	periodId, err := strconv.Atoi(f.Get("period_id"))
+	periodIdUnprocessed := f.Get("period_id")
+	span.SetAttributes(attribute.String("period_id_unprocessed", periodIdUnprocessed))
+	periodId, err := strconv.Atoi(periodIdUnprocessed)
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid period id (not convertable to int)")
 	}
-	subjectId, err := strconv.Atoi(f.Get("subject_id"))
+	span.SetAttributes(attribute.Int("period_id", periodId))
+
+	subjectIdUnprocessed := f.Get("subject_id")
+	span.SetAttributes(attribute.String("subject_id_unprocessed", subjectIdUnprocessed))
+	subjectId, err := strconv.Atoi(subjectIdUnprocessed)
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid subject id (not convertable to int)")
 	}
-	roomId, err := strconv.Atoi(f.Get("room_id"))
+	span.SetAttributes(attribute.Int("subject_id", subjectId))
+
+	roomIdUnprocessed := f.Get("room_id")
+	span.SetAttributes(attribute.String("room_id_unprocessed", roomIdUnprocessed))
+	roomId, err := strconv.Atoi(roomIdUnprocessed)
 	if err != nil {
 		return utils.NewParserError(nil, "Invalid room id (not convertable to int)")
 	}
+	span.SetAttributes(attribute.Int("room_id", roomId))
+
+	schoolIdUnprocessed := f.Get("school_id")
+	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
+	schoolId, err := strconv.Atoi(schoolIdUnprocessed)
+	if err != nil {
+		return utils.NewParserError(nil, "Invalid school id (not convertable to int)")
+	}
+	span.SetAttributes(attribute.Int("school_id", schoolId))
+
+	span.SetAttributes(
+		attribute.Int("period id", periodId),
+		attribute.Int("subject id", subjectId),
+		attribute.Int("room id", roomId),
+		attribute.Int("school id", schoolId),
+		attribute.String("weekday", weekday),
+	)
 
 	*handlerCtx = context.WithValue(*handlerCtx, "regular timetable", RegularTimetable{
 		id:        -1,
 		periodId:  periodId,
 		subjectId: subjectId,
 		roomId:    roomId,
+		schoolId:  schoolId,
 		weekday:   weekday,
 	})
 
@@ -75,7 +104,7 @@ func ParseRegularTimetable(f url.Values, parserCtx context.Context, handlerCtx *
 }
 
 func (t RegularTimetable) SaveToDB(tx pgx.Tx) (err error) {
-	_, err = tx.Exec(context.TODO(), "insert into regular_timetable (period_id, subject_id, room_id, weekday) values ($1, $2, $3, $4)", t.periodId, t.subjectId, t.roomId, t.weekday)
+	_, err = tx.Exec(context.TODO(), "insert into regular_timetable (period_id, subject_id, room_id, school_id, weekday) values ($1, $2, $3, $4, $5)", t.periodId, t.subjectId, t.roomId, t.schoolId, t.weekday)
 	return
 }
 

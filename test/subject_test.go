@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	i "github.com/dr0th3r/learnscape/internal"
+	"github.com/jackc/pgx/v5"
 )
 
 func TestSubject(t *testing.T) {
@@ -37,10 +38,20 @@ func TestSubject(t *testing.T) {
 		t.Error(err)
 	}
 
+	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("%s%s", db_url, db_name))
+	if err != nil {
+		t.Error(err)
+	}
+	schoolId, err := createSchool(conn)
+	if err != nil {
+		t.Error(err)
+	}
+
 	create_subject_url := "http://localhost:8080/subject"
 
 	t.Run("can't create subject without name", func(t *testing.T) {
 		res, err := http.PostForm(create_subject_url, url.Values{
+			"school_id": {schoolId},
 			"mandatory": {"false"},
 		})
 		if err != nil {
@@ -57,7 +68,8 @@ func TestSubject(t *testing.T) {
 
 	t.Run("can create subject without passing if it's mandatory", func(t *testing.T) {
 		res, err := http.PostForm(create_subject_url, url.Values{
-			"name": {"Maths"},
+			"school_id": {schoolId},
+			"name":      {"Maths"},
 		})
 		if err != nil {
 			t.Error(err)

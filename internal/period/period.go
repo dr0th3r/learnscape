@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
-	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -23,23 +23,26 @@ var (
 )
 
 type Period struct {
-	id        int
-	school_id uuid.UUID
-	start     string
-	end       string
+	id       int
+	schoolId int
+	start    string
+	end      string
 }
 
 func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing period")
 
-	school_id, err := uuid.Parse(f.Get("school_id"))
+	schoolIdUnprocessed := f.Get("school_id")
+	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
+	schoolId, err := strconv.Atoi(schoolIdUnprocessed)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
-	span.SetAttributes(attribute.String("school_id", school_id.String()))
+	span.SetAttributes(attribute.Int("school_id", schoolId))
 
 	start := f.Get("start")
+	span.SetAttributes(attribute.String("start_unprocessed", start))
 	_, err = time.Parse(time.TimeOnly, start)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
@@ -47,6 +50,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span.SetAttributes(attribute.String("start", start))
 
 	end := f.Get("end")
+	span.SetAttributes(attribute.String("end_unprocessed", end))
 	_, err = time.Parse(time.TimeOnly, end)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid end time")
@@ -54,10 +58,10 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span.SetAttributes(attribute.String("end", end))
 
 	*handlerCtx = context.WithValue(*handlerCtx, "period", Period{
-		id:        -1,
-		school_id: school_id,
-		start:     start,
-		end:       end,
+		id:       -1,
+		schoolId: schoolId,
+		start:    start,
+		end:      end,
 	})
 
 	return nil
@@ -65,7 +69,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 
 func (p Period) SaveToDB(tx pgx.Tx) error {
 	_, err := tx.Exec(context.Background(), "insert into period (school_id, span) values($1, $2)",
-		p.school_id, fmt.Sprintf("[%s, %s]", p.start, p.end),
+		p.schoolId, fmt.Sprintf("[%s, %s]", p.start, p.end),
 	)
 	if err != nil {
 		return err

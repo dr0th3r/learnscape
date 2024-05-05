@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/google/uuid"
@@ -19,45 +20,50 @@ var (
 )
 
 type Room struct {
-	id         int
-	name       string
-	school_id  uuid.UUID
-	teacher_id uuid.UUID
+	id        int
+	name      string
+	schoolId  int
+	teacherId uuid.UUID
 }
 
 func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing room")
 
-	school_id, err := uuid.Parse(f.Get("school_id"))
+	schoolIdUnprocessed := f.Get("school_id")
+	span.SetAttributes(attribute.String("school_id_unprocessed", schoolIdUnprocessed))
+	schoolId, err := strconv.Atoi(f.Get("school_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
-	span.SetAttributes(attribute.String("school_id", school_id.String()))
+	span.SetAttributes(attribute.Int("school_id", schoolId))
 
-	teacher_id, err := uuid.Parse(f.Get("teacher_id"))
+	teacherIdUnprocessed := f.Get("teacher_id")
+	span.SetAttributes(attribute.String("teacher_id_unprocessed", teacherIdUnprocessed))
+	teacherId, err := uuid.Parse(teacherIdUnprocessed)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid teacher id")
 	}
-	span.SetAttributes(attribute.String("teacher_id", teacher_id.String()))
+	span.SetAttributes(attribute.String("teacher_id", teacherId.String()))
 
 	name := f.Get("name")
+	span.SetAttributes(attribute.String("name", name))
 	if name == "" {
 		return utils.NewParserError(nil, "Name not provided")
 	}
 
 	*handlerCtx = context.WithValue(*handlerCtx, "room", Room{
-		id:         -1,
-		name:       name,
-		school_id:  school_id,
-		teacher_id: teacher_id,
+		id:        -1,
+		name:      name,
+		schoolId:  schoolId,
+		teacherId: teacherId,
 	})
 
 	return nil
 }
 
 func (r Room) SaveToDB(tx pgx.Tx) error {
-	_, err := tx.Exec(context.Background(), "insert into room (name, school_id, teacher_id) values ($1, $2, $3)", r.name, r.school_id, r.teacher_id)
+	_, err := tx.Exec(context.Background(), "insert into room (name, school_id, teacher_id) values ($1, $2, $3)", r.name, r.schoolId, r.teacherId)
 	if err != nil {
 		return err
 	}

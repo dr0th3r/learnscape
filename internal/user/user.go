@@ -44,10 +44,14 @@ func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing user")
 
-	email, err := mail.ParseAddress(f.Get("email"))
+	emailUnprocessed := f.Get("email")
+	span.SetAttributes(attribute.String("email_unprocessed", emailUnprocessed))
+	email, err := mail.ParseAddress(emailUnprocessed)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid email provided")
 	}
+	span.SetAttributes(attribute.String("email", email.Address))
+
 	password := f.Get("password")
 	if err := validatePassword(password); err != nil {
 		return utils.NewParserError(err, "Invalid password provided")
@@ -65,7 +69,6 @@ func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.
 		attribute.String("id", user.id),
 		attribute.String("name", user.name),
 		attribute.String("surname", user.surname),
-		attribute.String("email", user.email),
 	)
 
 	if user.name == "" {

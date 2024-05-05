@@ -10,7 +10,7 @@ CREATE EXTENSION btree_gist;
 
 CREATE TABLE IF NOT EXISTS period (
 	id SERIAL PRIMARY KEY,
-	school_id UUID REFERENCES school(id),
+	school_id INT REFERENCES school(id) NOT NULL,
 	span TIMERANGE NOT NULL,
 	EXCLUDE USING gist (school_id WITH =, span WITH &&)
 );

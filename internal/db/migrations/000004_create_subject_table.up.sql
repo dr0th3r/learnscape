@@ -1,5 +1,6 @@
 CREATE TABLE IF NOT EXISTS subject (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(255),
+	school_id INT REFERENCES school(id),
 	mandatory BOOLEAN DEFAULT TRUE
 );

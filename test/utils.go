@@ -79,7 +79,7 @@ func waitForReady(ctx context.Context) error {
 }
 
 func createSchool(db *pgx.Conn) (string, error) {
-	id := uuid.NewString()
+	id := fmt.Sprint(rand.Intn(10000))
 	_, err := db.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
 		id, "test", "test city", "123 45", "street 7",
 	)

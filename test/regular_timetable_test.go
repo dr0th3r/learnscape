@@ -85,6 +85,7 @@ func TestRegularTimetable(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
 			"period_id":  {"1"},
 			"subject_id": {"1"},
+			"school_id":  {"1"},
 			"room_id":    {"random"},
 			"weekday":    {"1"},
 		})
@@ -106,6 +107,7 @@ func TestRegularTimetable(t *testing.T) {
 			"period_id":  {"1"},
 			"subject_id": {"1"},
 			"room_id":    {"1"},
+			"school_id":  {"1"},
 			"weekday":    {"random"},
 		})
 
@@ -126,6 +128,7 @@ func TestRegularTimetable(t *testing.T) {
 			"period_id":  {periodId},
 			"subject_id": {subjectId},
 			"room_id":    {roomId},
+			"school_id":  {schoolId},
 			"weekday":    {"1"},
 		})
 
