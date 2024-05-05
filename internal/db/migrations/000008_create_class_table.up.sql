@@ -2,5 +2,5 @@ CREATE TABLE IF NOT EXISTS class (
 	id SERIAL PRIMARY KEY,
 	name VARCHAR(255) NOT NULL,
 	year SMALLINT NOT NULL,
-	class_teacher UUID REFERENCES users(id)
+	class_teacher_id UUID REFERENCES users(id)
 );

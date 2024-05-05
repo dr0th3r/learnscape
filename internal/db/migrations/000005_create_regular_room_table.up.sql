@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS room (
 	id SERIAL PRIMARY KEY,
 	school_id INT REFERENCES school(id) NOT NULL,
-	name VARCHAR(255),
+	name VARCHAR(255) NOT NULL,
 	teacher_id UUID REFERENCES users(id)
 );

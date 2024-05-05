@@ -3,6 +3,7 @@ package internal
 import (
 	"net/http"
 
+	"github.com/dr0th3r/learnscape/internal/class"
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
 	"github.com/dr0th3r/learnscape/internal/period"
 	"github.com/dr0th3r/learnscape/internal/report"
@@ -53,5 +54,8 @@ func addRoutes(
 	))
 	mux.Handle("POST /regular_report", utils.ParseForm(
 		report.HandleCreateRegularReport(db), report.ParseRegularReport,
+	))
+	mux.Handle("POST /class", utils.ParseForm(
+		class.HandleCreateClass(db), class.Parse,
 	))
 }
