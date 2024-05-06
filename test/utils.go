@@ -176,3 +176,16 @@ func createGroup(db *pgx.Conn) (string, error) {
 
 	return id, nil
 }
+
+func createRegularTimetableGroup(db *pgx.Conn, regularTimetableId, groupId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.TODO(),
+		"insert into regular_timetable_group (regular_timetable_id, group_id) values ($1, $2)",
+		regularTimetableId, groupId)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
