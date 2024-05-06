@@ -148,3 +148,17 @@ func createRegularTimetable(db *pgx.Conn, periodId, subjectId, schoolId, roomId 
 
 	return id, nil
 }
+
+func createClass(db *pgx.Conn, teacherId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(),
+		"insert into class (id, name, year, class_teacher_id) values ($1, $2, $3, $4)",
+		id, "test", 1, teacherId,
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
