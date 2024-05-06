@@ -162,3 +162,17 @@ func createClass(db *pgx.Conn, teacherId string) (string, error) {
 
 	return id, nil
 }
+
+func createGroup(db *pgx.Conn) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(),
+		`insert into "group" (id, name) values ($1, $2)`,
+		id, "test_group",
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}

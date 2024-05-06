@@ -60,6 +60,9 @@ func addRoutes(
 		class.HandleCreateClass(db), class.Parse,
 	))
 	mux.Handle("POST /group", utils.ParseForm(
-		group.HandleCreateGroup(db), group.Parse,
+		group.HandleCreateGroup(db), group.ParseGroup,
+	))
+	mux.Handle("POST /users_group", utils.ParseForm(
+		group.HandleCreateUsersGroup(db), group.ParseUsersGroup,
 	))
 }

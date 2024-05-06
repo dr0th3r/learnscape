@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	tracer = otel.Tracer("group")
+	tracerGroup = otel.Tracer("group")
 )
 
 type Group struct {
@@ -23,7 +23,7 @@ type Group struct {
 	name    string
 }
 
-func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+func ParseGroup(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("parsing group")
 
@@ -56,7 +56,7 @@ func (g Group) SaveToDB(tx pgx.Tx) (err error) {
 func HandleCreateGroup(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqCtx := r.Context()
-		ctx, span := tracer.Start(reqCtx, "create group")
+		ctx, span := tracerGroup.Start(reqCtx, "create group")
 		defer span.End()
 
 		group := reqCtx.Value("group").(Group)
