@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/dr0th3r/learnscape/internal/class"
+	"github.com/dr0th3r/learnscape/internal/grade"
 	"github.com/dr0th3r/learnscape/internal/group"
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
 	"github.com/dr0th3r/learnscape/internal/period"
@@ -72,5 +73,9 @@ func addRoutes(
 	mux.Handle("POST /timetable_teacher", utils.ParseForm(
 		user.HandleCreateTimetableTeacher(db),
 		user.ParseTimetableTeacher,
+	))
+	mux.Handle("POST /grade", utils.ParseForm(
+		grade.HandleCreateGrade(db),
+		grade.Parse,
 	))
 }

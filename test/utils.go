@@ -184,3 +184,17 @@ func createGroup(db *pgx.Conn) (string, error) {
 
 	return id, nil
 }
+
+func createReport(db *pgx.Conn, reportedBy, timetableId string) (string, error) {
+	id := fmt.Sprint(rand.Intn(10000))
+
+	_, err := db.Exec(context.Background(),
+		"insert into report (id, timetable_id, reported_by, topic_covered) values ($1, $2, $3, $4)",
+		id, timetableId, reportedBy, "linear algebra",
+	)
+	if err != nil {
+		return "", err
+	}
+
+	return id, nil
+}
