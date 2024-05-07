@@ -33,7 +33,7 @@ func ParseReport(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 
 	timetableId, err := utils.ParseInt(span, "timetable_id", f.Get("timetable_id"))
 	if err != nil {
-		return utils.NewParserError(err, "Invalid  timetable id")
+		return utils.NewParserError(err, "Invalid timetable id")
 	}
 	reportedByUnprocessed := f.Get("reported_by")
 	reportedBy, err := uuid.Parse(reportedByUnprocessed)

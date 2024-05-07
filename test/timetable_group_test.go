@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func TestRegularTimetableTeacher(t *testing.T) {
+func TestTimetableGroup(t *testing.T) {
 	db_url := os.Getenv("DATABASE_URL")
 	db_name := "test_" + fmt.Sprint(rand.Int())
 	t.Setenv("DATABASE_NAME", db_name)
@@ -42,10 +42,15 @@ func TestRegularTimetableTeacher(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	teacherId, err := createUser(conn)
+	userId, err := createUser(conn)
 	if err != nil {
 		t.Error(err)
 	}
+	groupId, err := createGroup(conn)
+	if err != nil {
+		t.Error(err)
+	}
+
 	schoolId, err := createSchool(conn)
 	if err != nil {
 		t.Error(err)
@@ -58,20 +63,20 @@ func TestRegularTimetableTeacher(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	roomId, err := createRoom(conn, teacherId, schoolId)
+	roomId, err := createRoom(conn, userId, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
-	regularTimetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	timetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	create_url := "http://localhost:8080/regular_timetable_teacher"
+	create_url := "http://localhost:8080/timetable_group"
 
-	t.Run("can't create regualar_timetable_teacher without regular timetable id", func(t *testing.T) {
+	t.Run("can't create timetable_group without  timetable id", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"teacher_id": {teacherId},
+			"group_id": {groupId},
 		})
 		if err != nil {
 			t.Error(err)
@@ -85,9 +90,9 @@ func TestRegularTimetableTeacher(t *testing.T) {
 		}
 	})
 
-	t.Run("can't create regular_timetable_teacher without teacher id", func(t *testing.T) {
+	t.Run("can't create timetable_group without group id", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {regularTimetableId},
+			"timetable_id": {timetableId},
 		})
 		if err != nil {
 			t.Error(err)
@@ -101,10 +106,10 @@ func TestRegularTimetableTeacher(t *testing.T) {
 		}
 	})
 
-	t.Run("can create regualar_timetable_teacher", func(t *testing.T) {
+	t.Run("can create timetable_group", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {regularTimetableId},
-			"teacher_id":           {teacherId},
+			"timetable_id": {timetableId},
+			"group_id":     {groupId},
 		})
 		if err != nil {
 			t.Error(err)

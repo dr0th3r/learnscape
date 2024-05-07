@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func TestRegularTimetableGroup(t *testing.T) {
+func TestRegularReport(t *testing.T) {
 	db_url := os.Getenv("DATABASE_URL")
 	db_name := "test_" + fmt.Sprint(rand.Int())
 	t.Setenv("DATABASE_NAME", db_name)
@@ -42,16 +42,11 @@ func TestRegularTimetableGroup(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	userId, err := createUser(conn)
-	if err != nil {
-		t.Error(err)
-	}
-	groupId, err := createGroup(conn)
-	if err != nil {
-		t.Error(err)
-	}
-
 	schoolId, err := createSchool(conn)
+	if err != nil {
+		t.Error(err)
+	}
+	teacherId, err := createUser(conn)
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,21 +58,23 @@ func TestRegularTimetableGroup(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	roomId, err := createRoom(conn, userId, schoolId)
-	if err != nil {
-		t.Error(err)
-	}
-	regularTimetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	roomId, err := createRoom(conn, teacherId, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	create_url := "http://localhost:8080/regular_timetable_group"
+	timetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	if err != nil {
+		t.Error(err)
+	}
 
-	t.Run("can't create regualar_timetable_group without regular timetable id", func(t *testing.T) {
+	create_url := "http://localhost:8080/report"
+
+	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"group_id": {groupId},
+			"topic_covered": {"linear algebra"},
 		})
+
 		if err != nil {
 			t.Error(err)
 		}
@@ -90,10 +87,12 @@ func TestRegularTimetableGroup(t *testing.T) {
 		}
 	})
 
-	t.Run("can't create regular_timetable_group without group id", func(t *testing.T) {
+	t.Run("regular_timetable_id must be numbers", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {regularTimetableId},
+			"regular_timetable_id": {"idk"},
+			"topic_covered":        {"linear algebra"},
 		})
+
 		if err != nil {
 			t.Error(err)
 		}
@@ -106,11 +105,13 @@ func TestRegularTimetableGroup(t *testing.T) {
 		}
 	})
 
-	t.Run("can create regualar_timetable_group", func(t *testing.T) {
+	t.Run("can create valid regular report", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {regularTimetableId},
-			"group_id":             {groupId},
+			"timetable_id":  {timetableId},
+			"reported_by":   {teacherId},
+			"topic_covered": {"linear algebra"},
 		})
+
 		if err != nil {
 			t.Error(err)
 		}

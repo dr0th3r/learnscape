@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func TestRegularReport(t *testing.T) {
+func TestTimetableTeacher(t *testing.T) {
 	db_url := os.Getenv("DATABASE_URL")
 	db_name := "test_" + fmt.Sprint(rand.Int())
 	t.Setenv("DATABASE_NAME", db_name)
@@ -42,11 +42,11 @@ func TestRegularReport(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	schoolId, err := createSchool(conn)
+	teacherId, err := createUser(conn)
 	if err != nil {
 		t.Error(err)
 	}
-	teacherId, err := createUser(conn)
+	schoolId, err := createSchool(conn)
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,19 +62,17 @@ func TestRegularReport(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-
-	regularTimetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	timetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
 	if err != nil {
 		t.Error(err)
 	}
 
-	create_url := "http://localhost:8080/regular_report"
+	create_url := "http://localhost:8080/timetable_teacher"
 
-	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
+	t.Run("can't create regualar_timetable_teacher without  timetable id", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"topic_covered": {"linear algebra"},
+			"teacher_id": {teacherId},
 		})
-
 		if err != nil {
 			t.Error(err)
 		}
@@ -87,12 +85,10 @@ func TestRegularReport(t *testing.T) {
 		}
 	})
 
-	t.Run("regular_timetable_id must be numbers", func(t *testing.T) {
+	t.Run("can't create timetable_teacher without teacher id", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {"idk"},
-			"topic_covered":        {"linear algebra"},
+			"timetable_id": {timetableId},
 		})
-
 		if err != nil {
 			t.Error(err)
 		}
@@ -105,13 +101,11 @@ func TestRegularReport(t *testing.T) {
 		}
 	})
 
-	t.Run("can create valid regular report", func(t *testing.T) {
+	t.Run("can create regualar_timetable_teacher", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"timetable_id":  {regularTimetableId},
-			"reported_by":   {teacherId},
-			"topic_covered": {"linear algebra"},
+			"timetable_id": {timetableId},
+			"teacher_id":   {teacherId},
 		})
-
 		if err != nil {
 			t.Error(err)
 		}

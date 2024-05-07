@@ -53,7 +53,7 @@ func addRoutes(
 	mux.Handle("POST /regular_timetable", utils.ParseForm(
 		timetable.HandleCreateRegularTimetable(db), timetable.ParseRegularTimetable,
 	))
-	mux.Handle("POST /regular_report", utils.ParseForm(
+	mux.Handle("POST /report", utils.ParseForm(
 		report.HandleCreateReport(db), report.ParseReport,
 	))
 	mux.Handle("POST /class", utils.ParseForm(
@@ -65,12 +65,12 @@ func addRoutes(
 	mux.Handle("POST /users_group", utils.ParseForm(
 		group.HandleCreateUsersGroup(db), group.ParseUsersGroup,
 	))
-	mux.Handle("POST /regular_timetable_group", utils.ParseForm(
-		group.HandleCreateRegularTimetableGroup(db),
-		group.ParseRegularTimetableGroup,
+	mux.Handle("POST /timetable_group", utils.ParseForm(
+		group.HandleCreateTimetableGroup(db),
+		group.ParseTimetableGroup,
 	))
-	mux.Handle("POST /regular_timetable_teacher", utils.ParseForm(
-		user.HandleCreateRegularTimetableTeacher(db),
-		user.ParseRegularTimetableTeacher,
+	mux.Handle("POST /timetable_teacher", utils.ParseForm(
+		user.HandleCreateTimetableTeacher(db),
+		user.ParseTimetableTeacher,
 	))
 }
