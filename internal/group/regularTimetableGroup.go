@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	tracerRegularTimetableGroup = otel.Tracer("users group")
+	tracerRegularTimetableGroup = otel.Tracer("regular timetable group")
 )
 
 type RegularTimetableGroup struct {
@@ -23,7 +23,7 @@ type RegularTimetableGroup struct {
 
 func ParseRegularTimetableGroup(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
 	span := trace.SpanFromContext(parserCtx)
-	span.AddEvent("parsing users group")
+	span.AddEvent("parsing regular timetable group")
 
 	regularTimetableId, err := utils.ParseInt(span, "regular_timetable_id", f.Get("regular_timetable_id"))
 	if err != nil {
