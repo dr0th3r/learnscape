@@ -17,6 +17,8 @@ var (
 	tracer = otel.Tracer("regular timetable")
 )
 
+const regularTimetableType = "regular"
+
 type RegularTimetable struct {
 	id        int
 	periodId  int
@@ -88,7 +90,19 @@ func ParseRegularTimetable(f url.Values, parserCtx context.Context, handlerCtx *
 }
 
 func (t RegularTimetable) SaveToDB(tx pgx.Tx) (err error) {
-	_, err = tx.Exec(context.TODO(), "insert into regular_timetable (period_id, subject_id, room_id, school_id, weekday) values ($1, $2, $3, $4, $5)", t.periodId, t.subjectId, t.roomId, t.schoolId, t.weekday)
+	_, err = tx.Exec(
+		context.TODO(),
+		`
+		with inserted_timetable AS (
+			insert into timetable (period_id, subject_id, room_id, school_id, type) 
+			values ($1, $2, $3, $4, $5)
+			returning id
+		)
+		insert into regular_timetable (id, weekday)
+		SELECT id, $6
+		from inserted_timetable
+		`,
+		t.periodId, t.subjectId, t.roomId, t.schoolId, regularTimetableType, t.weekday)
 	return
 }
 

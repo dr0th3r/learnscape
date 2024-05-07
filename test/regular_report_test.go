@@ -105,11 +105,11 @@ func TestRegularReport(t *testing.T) {
 		}
 	})
 
-	t.Run("can create valid regular timetable", func(t *testing.T) {
+	t.Run("can create valid regular report", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
-			"regular_timetable_id": {regularTimetableId},
-			"reported_by":          {teacherId},
-			"topic_covered":        {"linear algebra"},
+			"timetable_id":  {regularTimetableId},
+			"reported_by":   {teacherId},
+			"topic_covered": {"linear algebra"},
 		})
 
 		if err != nil {

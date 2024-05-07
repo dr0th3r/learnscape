@@ -137,9 +137,17 @@ func createRegularTimetable(db *pgx.Conn, periodId, subjectId, schoolId, roomId 
 	id := fmt.Sprint(rand.Intn(10000))
 
 	_, err := db.Exec(context.Background(),
-		`insert into regular_timetable (id, period_id, subject_id, school_id, room_id, weekday)
-		values($1, $2, $3, $4, $5, $6)`,
-		id, periodId, subjectId, schoolId, roomId, "Po",
+		`
+		with inserted_timetable AS (
+			insert into timetable (id, period_id, subject_id, room_id, school_id, type) 
+			values ($1, $2, $3, $4, $5, $6)
+			returning id
+		)
+		insert into regular_timetable (id, weekday)
+		SELECT id, $7
+		from inserted_timetable
+		`,
+		id, periodId, subjectId, roomId, schoolId, "regular", "Po",
 	)
 
 	if err != nil {

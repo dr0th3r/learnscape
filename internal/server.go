@@ -54,7 +54,7 @@ func addRoutes(
 		timetable.HandleCreateRegularTimetable(db), timetable.ParseRegularTimetable,
 	))
 	mux.Handle("POST /regular_report", utils.ParseForm(
-		report.HandleCreateRegularReport(db), report.ParseRegularReport,
+		report.HandleCreateReport(db), report.ParseReport,
 	))
 	mux.Handle("POST /class", utils.ParseForm(
 		class.HandleCreateClass(db), class.Parse,
