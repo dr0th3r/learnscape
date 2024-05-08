@@ -1,6 +1,6 @@
 CREATE TYPE weekday AS ENUM ('Po', 'Út', 'St', 'Čt', 'Pá');
 
-CREATE TYPE timetable_type AS ENUM ('regular', 'substitute');
+CREATE TYPE timetable_type AS ENUM ('regular', 'substitute', 'event');
 
 CREATE TABLE IF NOT EXISTS timetable (
 	id SERIAL PRIMARY KEY,

@@ -14,7 +14,7 @@ import (
 )
 
 var (
-	tracer = otel.Tracer("regular timetable")
+	tracerRegular = otel.Tracer("regular timetable")
 )
 
 const regularTimetableType = "regular"
@@ -69,14 +69,6 @@ func ParseRegularTimetable(f url.Values, parserCtx context.Context, handlerCtx *
 		return utils.NewParserError(nil, "Invalid school id (not convertable to int)")
 	}
 
-	span.SetAttributes(
-		attribute.Int("period id", periodId),
-		attribute.Int("subject id", subjectId),
-		attribute.Int("room id", roomId),
-		attribute.Int("school id", schoolId),
-		attribute.String("weekday", weekday),
-	)
-
 	*handlerCtx = context.WithValue(*handlerCtx, "regular timetable", RegularTimetable{
 		id:        -1,
 		periodId:  periodId,
@@ -116,7 +108,7 @@ func HandleCreateRegularTimetable(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			reqCtx := r.Context()
-			ctx, span := tracer.Start(reqCtx, "create regulart timetable")
+			ctx, span := tracerRegular.Start(reqCtx, "create regulart timetable")
 			defer span.End()
 
 			timetable := reqCtx.Value("regular timetable").(RegularTimetable)

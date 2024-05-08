@@ -58,6 +58,9 @@ func addRoutes(
 	mux.Handle("POST /substitute_timetable", utils.ParseForm(
 		timetable.HandleCreateSubstituteTimetable(db), timetable.ParseSubstituteTimetable,
 	))
+	mux.Handle("POST /event_timetable", utils.ParseForm(
+		timetable.HandleCreateEventTimetable(db), timetable.ParseEventTimetable,
+	))
 	mux.Handle("POST /report", utils.ParseForm(
 		report.HandleCreateReport(db), report.ParseReport,
 	))
