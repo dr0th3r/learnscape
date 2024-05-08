@@ -1,13 +1,13 @@
 CREATE OR REPLACE FUNCTION validate_timetable_does_not_have_date()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NOT EXISTS (
+    IF EXISTS (
         SELECT 1
         FROM timetable
         WHERE id = NEW.timetable_id
-            AND type IN ('regular', 'event')
+            AND type IN ('regular', 'substitute')
     ) THEN
-        RAISE EXCEPTION 'Invalid timetable type - should have type ''regular'' or ''event''';
+        RAISE EXCEPTION 'Invalid timetable type - should not have type ''regular'' or ''event''';
     END IF;
     RETURN NEW;
 END;
@@ -16,11 +16,11 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION validate_timetable_has_date()
 RETURNS TRIGGER AS $$
 BEGIN
-    IF NOT EXISTS (
+    IF EXISTS (
         SELECT 1
         FROM timetable
         WHERE id = NEW.timetable_id
-            AND type NOT IN ('regular', 'event')
+            AND type NOT IN ('regular', 'substitute')
     ) THEN
         RAISE EXCEPTION 'Invalid timetable type - should have type ''regular'' or ''event''';
     END IF;

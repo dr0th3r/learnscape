@@ -7,6 +7,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/grade"
 	"github.com/dr0th3r/learnscape/internal/group"
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
+	"github.com/dr0th3r/learnscape/internal/note"
 	"github.com/dr0th3r/learnscape/internal/period"
 	"github.com/dr0th3r/learnscape/internal/report"
 	"github.com/dr0th3r/learnscape/internal/room"
@@ -77,5 +78,9 @@ func addRoutes(
 	mux.Handle("POST /grade", utils.ParseForm(
 		grade.HandleCreateGrade(db),
 		grade.Parse,
+	))
+	mux.Handle("POST /note", utils.ParseForm(
+		note.HandleCreateNote(db),
+		note.Parse,
 	))
 }
