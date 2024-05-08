@@ -32,9 +32,12 @@ func TestClass(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
-	go i.Run(ctx)
-
-	fmt.Println("idk")
+	//go i.Run(ctx)
+	go func() {
+		if err := i.Run(ctx); err != nil {
+			t.Error(err)
+		}
+	}()
 
 	if err := waitForReady(ctx); err != nil {
 		t.Error(err)

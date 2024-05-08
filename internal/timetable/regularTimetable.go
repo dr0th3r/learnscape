@@ -93,16 +93,22 @@ func (t RegularTimetable) SaveToDB(tx pgx.Tx) (err error) {
 	_, err = tx.Exec(
 		context.TODO(),
 		`
-		with inserted_timetable AS (
-			insert into timetable (period_id, subject_id, room_id, school_id, type) 
-			values ($1, $2, $3, $4, $5)
-			returning id
+		WITH inserted_timetable AS (
+		    INSERT INTO timetable (school_id, type) 
+		    VALUES ($1, $2)
+		    RETURNING id
+		),
+		inserted_academic_timetable AS (
+		    INSERT INTO academic_timetable (id, period_id, subject_id, room_id)
+		    SELECT id, $3, $4, $5
+		    FROM inserted_timetable
 		)
-		insert into regular_timetable (id, weekday)
+		INSERT INTO regular_timetable (id, weekday)
 		SELECT id, $6
-		from inserted_timetable
+		FROM inserted_timetable
 		`,
-		t.periodId, t.subjectId, t.roomId, t.schoolId, regularTimetableType, t.weekday)
+		t.schoolId, regularTimetableType, t.periodId, t.subjectId, t.roomId, t.weekday)
+
 	return
 }
 

@@ -127,7 +127,7 @@ func TestSubstituteTimetable(t *testing.T) {
 		}
 	})
 
-	t.Run("can create valid regular timetable", func(t *testing.T) {
+	t.Run("can create valid substitute timetable", func(t *testing.T) {
 		res, err := http.PostForm(create_url, url.Values{
 			"period_id":  {periodId},
 			"subject_id": {subjectId},
