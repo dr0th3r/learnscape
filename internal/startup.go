@@ -69,6 +69,7 @@ func Run(ctx context.Context) (err error) {
 
 	go func() {
 		log.Printf("listening on %s\n", httpServer.Addr)
+		fmt.Println("listening")
 		if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Fprintf(os.Stderr, "error listening and serving: %s\n", err)
 		}

@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS timetable (
 	subject_id INT REFERENCES subject(id) NOT NULL,
 	school_id INT REFERENCES school(id) NOT NULL,
 	room_id INT REFERENCES room(id) NOT NULL,
-	type TIMETABLE_TYPE NOT NULL,
+	type TIMETABLE_TYPE NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS regular_timetable (

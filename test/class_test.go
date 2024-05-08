@@ -34,6 +34,8 @@ func TestClass(t *testing.T) {
 	t.Cleanup(cancel)
 	go i.Run(ctx)
 
+	fmt.Println("idk")
+
 	if err := waitForReady(ctx); err != nil {
 		t.Error(err)
 	}
