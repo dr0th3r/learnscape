@@ -60,6 +60,7 @@ func ParseEventTimetable(f url.Values, parserCtx context.Context, handlerCtx *co
 	}
 
 	//TODO: add parsing time with setting attributes to utils
+	//TODO: change start and end to time.Time
 
 	name := f.Get("name")
 	span.SetAttributes(
