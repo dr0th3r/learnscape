@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strconv"
 
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -70,4 +71,13 @@ func ParseInt(span trace.Span, key, value string) (int, error) {
 	}
 
 	return intValue, nil
+}
+
+func ParseUuid(span trace.Span, key, value string) (uuid.UUID, error) {
+	uuid, err := uuid.Parse(value)
+	span.SetAttributes(
+		attribute.String(key+"_unprocessed", value),
+		attribute.String(key, uuid.String()),
+	)
+	return uuid, err
 }

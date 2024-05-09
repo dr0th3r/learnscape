@@ -11,6 +11,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+func randomString(length int) string {
+	res := make([]byte, length)
+
+	for i := range length {
+		res[i] = letters[rand.Intn(len(letters))]
+	}
+
+	return string(res)
+}
+
 func createNewDB(url string, db_name string) error {
 	conn, err := pgx.Connect(context.Background(), url)
 	if err != nil {
@@ -91,8 +103,9 @@ func createSchool(db *pgx.Conn) (string, error) {
 
 func createUser(db *pgx.Conn) (string, error) {
 	id := uuid.NewString()
+	email := randomString(5) + "@test.com"
 	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
-		id, "test", "idk", "test@idk.com", "testidk123",
+		id, "test", "idk", email, "testidk123",
 	)
 	if err != nil {
 		return "", err

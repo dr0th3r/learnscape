@@ -89,4 +89,8 @@ func addRoutes(
 		note.HandleCreateNote(db),
 		note.Parse,
 	))
+	mux.Handle("POST /parent_child", utils.ParseForm(
+		user.HandleCreateParentChild(db),
+		user.ParseParentChild,
+	))
 }
