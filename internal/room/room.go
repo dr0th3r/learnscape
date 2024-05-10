@@ -33,12 +33,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid school id")
 	}
-	teacherIdUnprocessed := f.Get("teacher_id")
-	teacherId, err := uuid.Parse(teacherIdUnprocessed)
-	span.SetAttributes(
-		attribute.String("teacher_id_unprocessed", teacherIdUnprocessed),
-		attribute.String("teacher_id", teacherId.String()),
-	)
+	teacherId, err := utils.ParseUuid(span, "teacher_id", f.Get("teacher_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid teacher id")
 	}

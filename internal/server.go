@@ -3,6 +3,7 @@ package internal
 import (
 	"net/http"
 
+	"github.com/dr0th3r/learnscape/internal/absence"
 	"github.com/dr0th3r/learnscape/internal/class"
 	"github.com/dr0th3r/learnscape/internal/grade"
 	"github.com/dr0th3r/learnscape/internal/group"
@@ -92,5 +93,9 @@ func addRoutes(
 	mux.Handle("POST /parent_child", utils.ParseForm(
 		user.HandleCreateParentChild(db),
 		user.ParseParentChild,
+	))
+	mux.Handle("POST /absence", utils.ParseForm(
+		absence.HandleCreateAbsence(db),
+		absence.Parse,
 	))
 }

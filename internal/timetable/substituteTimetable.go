@@ -92,8 +92,6 @@ func (t SubstituteTimetable) SaveToDB(tx pgx.Tx) (err error) {
 		`,
 		t.schoolId, substituteTimetableType, t.periodId, t.subjectId, t.roomId, t.date)
 
-	fmt.Println(err)
-
 	return
 }
 

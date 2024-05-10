@@ -11,7 +11,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -35,12 +34,7 @@ func ParseReport(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	if err != nil {
 		return utils.NewParserError(err, "Invalid timetable id")
 	}
-	reportedByUnprocessed := f.Get("reported_by")
-	reportedBy, err := uuid.Parse(reportedByUnprocessed)
-	span.SetAttributes(
-		attribute.String("reported_by_unprocessed", reportedByUnprocessed),
-		attribute.String("reported_by", reportedBy.String()),
-	)
+	reportedBy, err := utils.ParseUuid(span, "reported_by", f.Get("reported_by"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid reported by field")
 	}

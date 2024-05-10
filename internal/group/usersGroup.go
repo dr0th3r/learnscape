@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,12 +30,7 @@ func ParseUsersGroup(f url.Values, parserCtx context.Context, handlerCtx *contex
 	if err != nil {
 		return utils.NewParserError(err, "Invalid group id (not an int)")
 	}
-	userIdUnprocessed := f.Get("user_id")
-	userId, err := uuid.Parse(userIdUnprocessed)
-	span.SetAttributes(
-		attribute.String("user_id_unprocessed", userIdUnprocessed),
-		attribute.String("user_id", string(userId.String())),
-	)
+	userId, err := utils.ParseUuid(span, "user_id", f.Get("user_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid user id")
 	}

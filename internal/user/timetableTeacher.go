@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -31,12 +30,7 @@ func ParseTimetableTeacher(f url.Values, parserCtx context.Context, handlerCtx *
 	if err != nil {
 		return utils.NewParserError(err, "Invalid  timetable id (not an int)")
 	}
-	teacherIdUnprocessed := f.Get("teacher_id")
-	teacherId, err := uuid.Parse(teacherIdUnprocessed)
-	span.SetAttributes(
-		attribute.String("teacher_id_unprocessed", teacherIdUnprocessed),
-		attribute.String("teacher_id", teacherId.String()),
-	)
+	teacherId, err := utils.ParseUuid(span, "teacher_id", f.Get("teacher_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid teacherId")
 	}

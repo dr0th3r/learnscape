@@ -13,7 +13,6 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -24,8 +23,8 @@ var (
 type Period struct {
 	id       int
 	schoolId int
-	start    string
-	end      string
+	start    time.Time
+	end      time.Time
 }
 
 func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
@@ -37,24 +36,17 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 		return utils.NewParserError(err, "Invalid school id")
 	}
 
-	start := f.Get("start")
-	_, err = time.Parse(time.TimeOnly, start)
-	span.SetAttributes(
-		attribute.String("start_unprocessed", start),
-		attribute.String("start", start),
-	)
+	start, err := utils.ParseTime(span, "start", f.Get("start"), time.TimeOnly)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
 	}
-
-	end := f.Get("end")
-	_, err = time.Parse(time.TimeOnly, end)
-	span.SetAttributes(
-		attribute.String("end_unprocessed", end),
-		attribute.String("end", end),
-	)
+	end, err := utils.ParseTime(span, "end", f.Get("end"), time.TimeOnly)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid end time")
+	}
+
+	if end.Before(start) {
+		return utils.NewParserError(nil, "End can't be before start")
 	}
 
 	*handlerCtx = context.WithValue(*handlerCtx, "period", Period{
@@ -69,7 +61,12 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 
 func (p Period) SaveToDB(tx pgx.Tx) error {
 	_, err := tx.Exec(context.Background(), "insert into period (school_id, span) values($1, $2)",
-		p.schoolId, fmt.Sprintf("[%s, %s]", p.start, p.end),
+		p.schoolId,
+		fmt.Sprintf(
+			"[%s, %s]",
+			p.start.Format(time.TimeOnly),
+			p.end.Format(time.TimeOnly),
+		),
 	)
 	if err != nil {
 		return err

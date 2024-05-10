@@ -97,8 +97,6 @@ func (t EventTimetable) SaveToDB(tx pgx.Tx) (err error) {
 		`,
 		t.schoolId, eventTimetableType, t.name, t.description, fmt.Sprintf("[%s, %s]", t.start, t.end),
 	)
-	fmt.Println(err)
-
 	return
 }
 

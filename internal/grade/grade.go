@@ -10,7 +10,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/otel"
-	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 )
 
@@ -30,12 +29,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing grade")
 
-	studentIdUnprocessed := f.Get("student_id")
-	studentId, err := uuid.Parse(studentIdUnprocessed)
-	span.SetAttributes(
-		attribute.String("student_id_unprocessed", studentIdUnprocessed),
-		attribute.String("student_id", studentId.String()),
-	)
+	studentId, err := utils.ParseUuid(span, "student_id", f.Get("student_id"))
 	if err != nil {
 		return utils.NewParserError(err, "Invalid student id")
 	}
