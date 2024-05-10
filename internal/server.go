@@ -23,6 +23,9 @@ import (
 
 func NewServer(db *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
+	fs := http.FileServer(http.Dir("./web/css/"))
+	mux.Handle("/css/", http.StripPrefix("/css/", fs))
+
 	addRoutes(mux, db)
 	var handler http.Handler = mux
 	handler = otelhttp.NewHandler(handler, "server")
@@ -98,4 +101,5 @@ func addRoutes(
 		absence.HandleCreateAbsence(db),
 		absence.Parse,
 	))
+	mux.Handle("GET /login_signup", school.HandleGet())
 }

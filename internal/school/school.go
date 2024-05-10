@@ -2,6 +2,7 @@ package school
 
 import (
 	"context"
+	"html/template"
 	"net/http"
 	"net/url"
 	"time"
@@ -93,6 +94,15 @@ func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 			}
 
 			w.WriteHeader(http.StatusCreated)
+		},
+	)
+}
+
+func HandleGet() http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, r *http.Request) {
+			tmpl := template.Must(template.ParseFiles("./web/login_signup.html"))
+			tmpl.Execute(w, nil)
 		},
 	)
 }

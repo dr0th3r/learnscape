@@ -2,7 +2,6 @@ package timetable
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"net/url"
 	"time"

@@ -1,0 +1,25 @@
+* {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+}
+
+:root {
+	--bg: #121212;
+	--fg: #F0F0F0;
+	--p: #FFA500;
+	--s: #4CAF50;
+	--t: #2196F3; 
+	--e: #FF0000;
+	--w: #FFC107;
+	--i: #03A9F4;
+}
+
+body {
+	background-color: var(--bg);
+	height: 100vh;
+}
+
+h1 {
+	color: var(--p);
+}
