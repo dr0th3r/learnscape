@@ -5,19 +5,52 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title></title>
+	<script src="https://cdn.tailwindcss.com"></script>
 	<link href="./css/global.css" rel="stylesheet">
-	<link href="./css/login_signup.css" rel="stylesheet">
+	<style type="text/tailwindcss">
+		@layer base {
+			.input {
+				@apply rounded-lg border-0 outline-0 bg-gray-700 text-neutral-50 px-2 py-1
+			}
+		}
+	</style>
+	<script src="https://unpkg.com/htmx.org@1.6.0/dist/htmx.js"></script>
 </head>
 
 <body>
-	<div class="container">
-		<div class="inner">
-			<form id="register-school">
-				<input type="text" name="name" value="">
-				<input type="text" name="street" value="">
-			</form>
-		</div>
+	<div class="flex items-center justify-center h-dvh">
+		<form class="rounded-lg border-2 border-gray-700" hx-post="/register_school" hx-target="#result"
+			hx-trigger="submit" id="registration-form">
+			<div class="flex flex-col items-center gap-2 p-3" id="register-school">
+				<h2 class="text-neutral-50 font-semibold text-lg mb-2">Register School</h2>
+				<input type="text" name="school_name" class="input" placeholder="Name">
+				<input type="text" name="city" class="input" placeholder="City">
+				<input type="text" name="zip_code" class="input" placeholder="Zip code">
+				<input type="text" name="street" class="input" placeholder="Street">
+				<input type="text" name="street_address" class="input" placeholder="Street address">
+				<button type="button"
+					class="input w-full border-none text-black bg-lime-500 focus:border-1"
+					id="goto-register-admin">Register
+					Admin</button>
+			</div>
+			<div class="flex flex-col items-center gap-2 p-3 hidden" id="register-admin">
+				<h2 class="text-neutral-50 font-semibold text-lg mb-2">Register Admin</h2>
+				<input type="text" name="user_name" class="input" placeholder="Name">
+				<input type="text" name="surname" class="input" placeholder="Surname">
+				<input type="email" name="email" class="input" placeholder="Email">
+				<input type="password" name="password" class="input" placeholder="Password">
+				<button type="button" class="input w-full border-none text-black bg-lime-500"
+					id="go-back">Go
+					Back</button>
+				<button type="submit" class="input w-full border-none text-black bg-lime-500">Finish
+					Registration</button>
+			</div>
+			<div id="result" hx-swap="outerHTML">
+				<!-- This div will be replaced with the response from the server -->
+			</div>
+		</form>
 	</div>
+	<script src="js/login_signup.js"></script>
 </body>
 
 </html>

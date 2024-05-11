@@ -59,7 +59,7 @@ func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.
 
 	user := User{
 		id:       uuid.NewString(),
-		name:     f.Get("name"),
+		name:     f.Get("user_name"),
 		surname:  f.Get("surname"),
 		email:    email.Address,
 		password: password,
@@ -72,7 +72,7 @@ func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.
 	)
 
 	if user.name == "" {
-		return utils.NewParserError(nil, "Username not provided") //nil means use msg as error
+		return utils.NewParserError(nil, "User name not provided") //nil means use msg as error
 	}
 
 	if user.name == "" || user.surname == "" || user.email == "" || user.password == "" {

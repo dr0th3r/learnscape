@@ -49,7 +49,7 @@ func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context)
 	)
 
 	if school.name == "" {
-		return utils.NewParserError(nil, "Name not provided")
+		return utils.NewParserError(nil, "School name not provided")
 	} else if school.city == "" {
 		return utils.NewParserError(nil, "City not provided")
 	} else if school.zip_code == "" {

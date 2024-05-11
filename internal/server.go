@@ -23,8 +23,10 @@ import (
 
 func NewServer(db *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
-	fs := http.FileServer(http.Dir("./web/css/"))
-	mux.Handle("/css/", http.StripPrefix("/css/", fs))
+	css := http.FileServer(http.Dir("./web/css/"))
+	js := http.FileServer(http.Dir("./web/js/"))
+	mux.Handle("/css/", http.StripPrefix("/css/", css))
+	mux.Handle("/js/", http.StripPrefix("/js/", js))
 
 	addRoutes(mux, db)
 	var handler http.Handler = mux
