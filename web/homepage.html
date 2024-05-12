@@ -5,11 +5,27 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title></title>
-	<link href="css/style.css" rel="stylesheet">
+	<link href="css/global.css" rel="stylesheet">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<style type="text/tailwindcss">
+		@layer base {
+			.input {
+				@apply rounded-lg border-0 outline-0 bg-gray-700 text-neutral-50 px-2 py-1
+			}
+		}
+	</style>
+	<script src="https://unpkg.com/htmx.org@1.6.0/dist/htmx.js"></script>
 </head>
 
 <body>
-	<h1>Test</h1>
+	<header class="flex justify-between p-4 px-8 border-b border-gray-800">
+		<h2 class="font-bold text-xl text-neutral-50">Learnscape</h2>
+		<input type="text" name="search-bar" value="" placeholder="Search" class="input w-96">
+		<h3 class="text-neutral-50 text-bold text-lg">Petr Novak</h3>
+	</header>
+	<div class="grid">
+
+	</div>
 </body>
 
 </html>
