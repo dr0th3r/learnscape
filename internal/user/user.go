@@ -3,6 +3,7 @@ package user
 import (
 	"context"
 	"errors"
+	"html/template"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -143,13 +144,23 @@ func (u User) login(db *pgxpool.Pool) error {
 
 func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		jwt.MapClaims{
+		/*jwt.MapClaims{
 			"id":      u.id,
 			"name":    u.name,
 			"surname": u.surname,
 			"email":   u.email,
 			"exp":     exp.Unix(),
-		})
+		})*/
+		utils.UserClaims{
+			Id:      u.id,
+			Name:    u.name,
+			Surname: u.surname,
+			Email:   u.email,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(exp),
+			},
+		},
+	)
 
 	tokentStr, err := token.SignedString(secret)
 	if err != nil {
@@ -217,6 +228,14 @@ func HandleLogin(db *pgxpool.Pool) http.Handler {
 			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
 			}
+
 		},
 	)
+}
+
+func HandleGet() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		tmpl := template.Must(template.ParseFiles("./web/login.html"))
+		tmpl.Execute(w, nil)
+	})
 }

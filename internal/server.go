@@ -106,4 +106,5 @@ func addRoutes(
 	))
 	mux.Handle("GET /", utils.WithAuth(homepage.HandleGet()))
 	mux.Handle("GET /register", school.HandleGet())
+	mux.Handle("GET /login", user.HandleGet())
 }
