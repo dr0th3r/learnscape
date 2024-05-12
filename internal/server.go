@@ -103,5 +103,5 @@ func addRoutes(
 		absence.HandleCreateAbsence(db),
 		absence.Parse,
 	))
-	mux.Handle("GET /login_signup", school.HandleGet())
+	mux.Handle("GET /register", school.HandleGet())
 }
