@@ -42,9 +42,9 @@ func TestUser(t *testing.T) {
 
 	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
-			"name":    {"test"},
-			"surname": {"idk"},
-			"email":   {"test@idk.com"},
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"test@idk.com"},
 			//password is missing
 		})
 		if err != nil {
@@ -61,10 +61,10 @@ func TestUser(t *testing.T) {
 
 	t.Run("invalid email is rejected", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
-			"name":     {"test"},
-			"surname":  {"idk"},
-			"email":    {"invalid"},
-			"password": {"test123456"},
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"invalid"},
+			"password":  {"test123456"},
 		})
 		if err != nil {
 			t.Error(err)
@@ -80,10 +80,10 @@ func TestUser(t *testing.T) {
 
 	t.Run("invalid password is rejected", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
-			"name":     {"test"},
-			"surname":  {"idk"},
-			"email":    {"random@email.com"},
-			"password": {"123"}, //password is too short
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"random@email.com"},
+			"password":  {"123"}, //password is too short
 		})
 		if err != nil {
 			t.Error(err)
@@ -99,10 +99,10 @@ func TestUser(t *testing.T) {
 
 	t.Run("valid user is created", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
-			"name":     {"test"},
-			"surname":  {"idk"},
-			"email":    {"random2@email.com"},
-			"password": {"test123456"},
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"random2@email.com"},
+			"password":  {"test123456"},
 		})
 		if err != nil {
 			t.Error(err)
@@ -133,10 +133,10 @@ func TestUser(t *testing.T) {
 		password := "test123456"
 
 		res, err := http.PostForm(register_url, url.Values{
-			"name":     {"test"},
-			"surname":  {"idk"},
-			"email":    {email},
-			"password": {password}, //password is too short
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {email},
+			"password":  {password}, //password is too short
 		})
 		if err != nil {
 			t.Error(err)

@@ -63,10 +63,10 @@ func TestSchool(t *testing.T) {
 			"zip_code":       {"123 45"},
 			"street_address": {"test 8"},
 			//admin info
-			"name":     {"test"},
-			"surname":  {"idk"},
-			"email":    {"random2@email.com"},
-			"password": {"test123456"},
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"random2@email.com"},
+			"password":  {"test123456"},
 		})
 		if err != nil {
 			t.Error(err)
