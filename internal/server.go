@@ -8,6 +8,7 @@ import (
 	"github.com/dr0th3r/learnscape/internal/grade"
 	"github.com/dr0th3r/learnscape/internal/group"
 	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
+	"github.com/dr0th3r/learnscape/internal/homepage"
 	"github.com/dr0th3r/learnscape/internal/note"
 	"github.com/dr0th3r/learnscape/internal/period"
 	"github.com/dr0th3r/learnscape/internal/report"
@@ -25,8 +26,8 @@ func NewServer(db *pgxpool.Pool) http.Handler {
 	mux := http.NewServeMux()
 	css := http.FileServer(http.Dir("./web/css/"))
 	js := http.FileServer(http.Dir("./web/js/"))
-	mux.Handle("/css/", http.StripPrefix("/css/", css))
-	mux.Handle("/js/", http.StripPrefix("/js/", js))
+	mux.Handle("GET /css/", http.StripPrefix("/css/", css))
+	mux.Handle("GET /js/", http.StripPrefix("/js/", js))
 
 	addRoutes(mux, db)
 	var handler http.Handler = mux
@@ -39,7 +40,7 @@ func addRoutes(
 	db *pgxpool.Pool,
 ) {
 
-	mux.Handle("/health_check", hcheck.HandleHealthCheck())
+	mux.Handle("GET /health_check", hcheck.HandleHealthCheck())
 	mux.Handle("POST /register_user", utils.ParseForm(
 		user.HandleRegisterUser(db), user.ParseRegister,
 	))
@@ -103,5 +104,6 @@ func addRoutes(
 		absence.HandleCreateAbsence(db),
 		absence.Parse,
 	))
+	mux.Handle("GET /", utils.WithAuth(homepage.HandleGet()))
 	mux.Handle("GET /register", school.HandleGet())
 }
