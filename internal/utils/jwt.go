@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -30,8 +29,6 @@ func WithAuth(next http.Handler) http.Handler {
 
 		tokenStr, err := r.Cookie("token")
 
-		fmt.Println(tokenStr.Value)
-
 		if err != nil {
 			switch {
 			case errors.Is(err, http.ErrNoCookie):
@@ -46,16 +43,12 @@ func WithAuth(next http.Handler) http.Handler {
 			return []byte("my secret"), nil
 		})
 		if err != nil {
-			fmt.Println(err)
 			UnexpectedError(w, err, ctx)
 		} else if claims, ok := token.Claims.(*UserClaims); !ok {
-			fmt.Println(err)
 			UnexpectedError(w, err, ctx)
 		} else {
-			fmt.Println(claims)
+			ctx = context.WithValue(reqCtx, "claims", claims)
 		}
-
-		ctx = context.WithValue(reqCtx, "token", token)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

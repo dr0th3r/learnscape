@@ -2,6 +2,7 @@ package school
 
 import (
 	"context"
+	"fmt"
 	"html/template"
 	"net/http"
 	"net/url"
@@ -85,6 +86,7 @@ func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 
 			if err := utils.HandleTx(ctx, db, school.saveToDB, admin.SaveToDB); err != nil {
 				utils.UnexpectedError(w, err, ctx)
+				return
 			}
 
 			span.AddEvent("Starting to set jwt token for admin")
@@ -101,6 +103,11 @@ func HandleRegisterSchool(db *pgxpool.Pool) http.Handler {
 func HandleGet() http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
+			if _, err := template.ParseFiles("./web/register.html"); err != nil {
+				fmt.Println(w, err)
+				return
+			}
+
 			tmpl := template.Must(template.ParseFiles("./web/register.html"))
 			tmpl.Execute(w, nil)
 		},

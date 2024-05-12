@@ -20,14 +20,39 @@
 <body>
 	<header class="flex justify-between p-4 px-8 border-b border-gray-800">
 		<h2 class="font-bold text-xl text-neutral-50">Learnscape</h2>
-		<input type="text" name="search-bar" value="" placeholder="Search" class="input w-96">
+		<input type="text" name="search-bar" value="" placeholder="Hledat" class="input w-96">
 		<h3 class="text-neutral-50 text-bold text-lg">Petr Novak</h3>
 	</header>
-	<table>
-		<thead>
-			<th>Po</th>
-		</thead>
-	</table>
+	<div class="text-neutral-50 flex justify-center w-full mt-2">
+		<table class="border-collapse border border-slate-500 bg-white dark:bg-slate-800">
+			<thead class="bg-slate-50 dark:bg-slate-700">
+				<th class="border border-slate-600 p-4">Rozvrh</th>
+				{{range .Periods}}<th class="border border-slate-600 p-4">{{.}}</th> {{end}}
+			</thead>
+			<tbody>
+				<tr>
+					<td class="border border-slate-700 p-4">Po</td>
+					{{range .Monday}}<td class="border border-slate-700 p-4">{{.}}</td>{{end}}
+				</tr>
+				<tr>
+					<td class="border border-slate-700 p-4">Ut</td>
+					{{range .Tuesday}}<td class="border border-slate-700 p-4">{{.}}</td>{{end}}
+				</tr>
+				<tr>
+					<td class="border border-slate-700 p-4">St</td>
+					{{range .Wednesday}}<td class="border border-slate-700 p-4">{{.}}</td>{{end}}
+				</tr>
+				<tr>
+					<td class="border border-slate-700 p-4">Ct</td>
+					{{range .Thursday}}<td class="border border-slate-700 p-4">{{.}}</td>{{end}}
+				</tr>
+				<tr>
+					<td class="border border-slate-700 p-4">Pa</td>
+					{{range .Friday}}<td class="border border-slate-700 p-4">{{.}}</td>{{end}}
+				<tr>
+			</tbody>
+		</table>
+	</div>
 </body>
 
 </html>
