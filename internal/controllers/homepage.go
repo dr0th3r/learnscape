@@ -1,11 +1,11 @@
-package homepage
+package controllers
 
 import (
 	"html/template"
 	"net/http"
 )
 
-func HandleGet() http.Handler {
+func GetHomepage() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		randomData := []string{"12:30 - 13:45", "12:30 - 13:45"}
 		timetable := struct {

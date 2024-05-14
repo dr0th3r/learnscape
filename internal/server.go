@@ -3,20 +3,8 @@ package internal
 import (
 	"net/http"
 
-	"github.com/dr0th3r/learnscape/internal/absence"
-	"github.com/dr0th3r/learnscape/internal/class"
-	"github.com/dr0th3r/learnscape/internal/grade"
-	"github.com/dr0th3r/learnscape/internal/group"
-	hcheck "github.com/dr0th3r/learnscape/internal/healthCheck"
-	"github.com/dr0th3r/learnscape/internal/homepage"
-	"github.com/dr0th3r/learnscape/internal/note"
-	"github.com/dr0th3r/learnscape/internal/period"
-	"github.com/dr0th3r/learnscape/internal/report"
-	"github.com/dr0th3r/learnscape/internal/room"
-	"github.com/dr0th3r/learnscape/internal/school"
-	"github.com/dr0th3r/learnscape/internal/subject"
-	"github.com/dr0th3r/learnscape/internal/timetable"
-	"github.com/dr0th3r/learnscape/internal/user"
+	c "github.com/dr0th3r/learnscape/internal/controllers"
+	m "github.com/dr0th3r/learnscape/internal/models"
 	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
@@ -40,71 +28,68 @@ func addRoutes(
 	db *pgxpool.Pool,
 ) {
 
-	mux.Handle("GET /health_check", hcheck.HandleHealthCheck())
+	mux.Handle("GET /health_check", c.HealthCheck())
 	mux.Handle("POST /register_user", utils.ParseForm(
-		user.HandleRegisterUser(db), user.ParseRegister,
+		c.RegisterUser(db), m.ParseRegister,
 	))
 	mux.Handle("POST /login", utils.ParseForm(
-		user.HandleLogin(db), user.ParseLogin,
+		c.Login(db), m.ParseLogin,
 	))
 	mux.Handle("POST /register_school", utils.ParseForm(
-		school.HandleRegisterSchool(db), user.ParseRegister, school.Parse,
+		c.RegisterSchool(db), m.ParseRegister, m.ParseSchool,
 	))
 	mux.Handle("POST /period", utils.ParseForm(
-		period.HandleCreatePeriod(db), period.Parse,
+		c.CreatePeriod(db), m.ParsePeriod,
 	))
 	mux.Handle("POST /room", utils.ParseForm(
-		room.HandleCreateRoom(db), room.Parse,
+		c.CreateRoom(db), m.ParseRoom,
 	))
 	mux.Handle("POST /subject", utils.ParseForm(
-		subject.HandleCreateSubject(db), subject.Parse,
+		c.CreateSubject(db), m.ParseSubject,
 	))
 	mux.Handle("POST /regular_timetable", utils.ParseForm(
-		timetable.HandleCreateRegularTimetable(db), timetable.ParseRegularTimetable,
+		c.CreateRegularTimetable(db), m.ParseRegularTimetable,
 	))
 	mux.Handle("POST /substitute_timetable", utils.ParseForm(
-		timetable.HandleCreateSubstituteTimetable(db), timetable.ParseSubstituteTimetable,
+		c.CreateSubstituteTimetable(db), m.ParseSubstituteTimetable,
 	))
 	mux.Handle("POST /event_timetable", utils.ParseForm(
-		timetable.HandleCreateEventTimetable(db), timetable.ParseEventTimetable,
+		c.CreateEventTimetable(db), m.ParseEventTimetable,
 	))
 	mux.Handle("POST /report", utils.ParseForm(
-		report.HandleCreateReport(db), report.ParseReport,
+		c.CreateReport(db), m.ParseReport,
 	))
 	mux.Handle("POST /class", utils.ParseForm(
-		class.HandleCreateClass(db), class.Parse,
+		c.CreateClass(db), m.ParseClass,
 	))
 	mux.Handle("POST /group", utils.ParseForm(
-		group.HandleCreateGroup(db), group.ParseGroup,
+		c.CreateGroup(db), m.ParseGroup,
 	))
 	mux.Handle("POST /users_group", utils.ParseForm(
-		group.HandleCreateUsersGroup(db), group.ParseUsersGroup,
+		c.CreateUsersGroup(db), m.ParseUsersGroup,
 	))
 	mux.Handle("POST /timetable_group", utils.ParseForm(
-		group.HandleCreateTimetableGroup(db),
-		group.ParseTimetableGroup,
+		c.CreateTimetableGroup(db),
+		m.ParseTimetableGroup,
 	))
 	mux.Handle("POST /timetable_teacher", utils.ParseForm(
-		user.HandleCreateTimetableTeacher(db),
-		user.ParseTimetableTeacher,
+		c.CreateTimetableTeacher(db),
+		m.ParseTimetableTeacher,
 	))
 	mux.Handle("POST /grade", utils.ParseForm(
-		grade.HandleCreateGrade(db),
-		grade.Parse,
+		c.CreateGrade(db),
+		m.ParseGrade,
 	))
 	mux.Handle("POST /note", utils.ParseForm(
-		note.HandleCreateNote(db),
-		note.Parse,
+		c.CreateNote(db), m.ParseNote,
 	))
 	mux.Handle("POST /parent_child", utils.ParseForm(
-		user.HandleCreateParentChild(db),
-		user.ParseParentChild,
+		c.CreateParentChild(db), m.ParseParentChild,
 	))
 	mux.Handle("POST /absence", utils.ParseForm(
-		absence.HandleCreateAbsence(db),
-		absence.Parse,
+		c.CreateAbsence(db), m.ParseAbsence,
 	))
-	mux.Handle("GET /", utils.WithAuth(homepage.HandleGet()))
-	mux.Handle("GET /register", school.HandleGet())
-	mux.Handle("GET /login", user.HandleGet())
+	mux.Handle("GET /", utils.WithAuth(c.GetHomepage()))
+	mux.Handle("GET /register", c.GetRegister())
+	mux.Handle("GET /login", c.GetLogin())
 }

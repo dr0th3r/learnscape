@@ -53,7 +53,7 @@ func ParseSchool(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	return nil
 }
 
-func (s School) saveToDB(tx pgx.Tx) error {
+func (s School) SaveToDB(tx pgx.Tx) error {
 	_, err := tx.Exec(context.Background(), "insert into school (name, city, zip_code, street_address) values ($1, $2, $3, $4)",
 		s.name, s.city, s.zip_code, s.streetAddress,
 	)

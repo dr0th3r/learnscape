@@ -18,7 +18,7 @@ type Grade struct {
 	weight    int
 }
 
-func Parse(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
+func ParseGrade(f url.Values, parserCtx context.Context, handlerCtx *context.Context) *utils.ParseError {
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing grade")
 

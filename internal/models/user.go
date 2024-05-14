@@ -116,7 +116,7 @@ func (u User) SaveToDB(tx pgx.Tx) error {
 	return nil
 }
 
-func (u User) login(db *pgxpool.Pool) error {
+func (u User) Login(db *pgxpool.Pool) error {
 	ctx := context.Background()
 
 	var dbPassword string

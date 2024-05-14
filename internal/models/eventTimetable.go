@@ -12,6 +12,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const eventTimetableType = "event"
+
 type EventTimetable struct {
 	id          int
 	schoolId    int

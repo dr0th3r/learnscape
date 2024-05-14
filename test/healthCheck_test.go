@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/dr0th3r/learnscape/internal/healthCheck"
+	c "github.com/dr0th3r/learnscape/internal/controllers"
 )
 
 func TestHealthCheck(t *testing.T) {
@@ -13,7 +13,7 @@ func TestHealthCheck(t *testing.T) {
 		req, _ := http.NewRequest(http.MethodPost, "/health_check", nil)
 		res := httptest.NewRecorder()
 
-		hcheck.HandleHealthCheck().ServeHTTP(res, req)
+		c.HealthCheck().ServeHTTP(res, req)
 
 		statusGot := res.Result().StatusCode
 		statusWant := 200
