@@ -116,7 +116,7 @@ func ParseLogin(f url.Values, parserCtx context.Context, handlerCtx *context.Con
 	return nil
 }
 
-func (u User) SaveToDBWithSchoolId(schoolId *int) utils.TxFunc { //used to if wan't to explicitly pass school id
+func (u *User) SaveToDBWithSchoolId(schoolId *int) utils.TxFunc { //used to if wan't to explicitly pass school id
 	return func(tx pgx.Tx) error {
 		u.schoolId = *schoolId
 		return u.SaveToDB(tx)
@@ -138,11 +138,15 @@ func (u User) SaveToDB(tx pgx.Tx) error {
 	return nil
 }
 
-func (u User) Login(db *pgxpool.Pool) error {
+func (u *User) Login(db *pgxpool.Pool) error {
 	ctx := context.Background()
 
 	var dbPassword string
-	if err := db.QueryRow(ctx, "select password from users where email=$1", u.email).Scan(&dbPassword); err != nil {
+	if err := db.QueryRow(
+		ctx,
+		"select name, surname, password, school_id from users where email=$1", u.email).Scan(
+		&u.name, &u.surname, &dbPassword, &u.schoolId,
+	); err != nil {
 		return err
 	}
 
