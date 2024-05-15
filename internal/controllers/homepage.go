@@ -1,12 +1,37 @@
 package controllers
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
+
+	"github.com/dr0th3r/learnscape/internal/utils"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func GetHomepage() http.Handler {
+func GetHomepage(db *pgxpool.Pool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqCtx := r.Context()
+		ctx, span := tracer.Start(reqCtx, "get homepage")
+		defer span.End()
+
+		claims := reqCtx.Value("claims").(utils.UserClaims)
+		peridRows, err := db.Query(ctx, "SELECT start, end FROM period WHERE school_id=$1", claims.SchoolId)
+		if err != nil {
+			utils.UnexpectedError(w, err, ctx)
+			return
+		}
+		defer peridRows.Close()
+
+		for peridRows.Next() {
+			var start, end string
+			if err := peridRows.Scan(&start, &end); err != nil {
+				utils.UnexpectedError(w, err, ctx)
+				return
+			}
+			fmt.Println("Start: ", start, "End: ", end)
+		}
+
 		randomData := []string{"12:30 - 13:45", "12:30 - 13:45"}
 		timetable := struct {
 			Periods   []string

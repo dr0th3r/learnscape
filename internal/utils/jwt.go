@@ -14,10 +14,11 @@ var (
 )
 
 type UserClaims struct {
-	Id      string `json:"id"`
-	Name    string `json:"name"`
-	Surname string `json:"surname"`
-	Email   string `json:"email"`
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Surname  string `json:"surname"`
+	Email    string `json:"email"`
+	SchoolId string `json:"schoolId"`
 	jwt.RegisteredClaims
 }
 

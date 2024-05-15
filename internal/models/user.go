@@ -137,18 +137,12 @@ func (u User) Login(db *pgxpool.Pool) error {
 
 func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
-		/*jwt.MapClaims{
-			"id":      u.id,
-			"name":    u.name,
-			"surname": u.surname,
-			"email":   u.email,
-			"exp":     exp.Unix(),
-		})*/
 		utils.UserClaims{
-			Id:      u.id,
-			Name:    u.name,
-			Surname: u.surname,
-			Email:   u.email,
+			Id:       u.id,
+			Name:     u.name,
+			Surname:  u.surname,
+			Email:    u.email,
+			SchoolId: "test",
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(exp),
 			},
