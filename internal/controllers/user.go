@@ -20,6 +20,10 @@ func RegisterUser(db *pgxpool.Pool) http.Handler {
 			defer span.End()
 
 			user := reqCtx.Value("user").(models.User)
+			if !user.HasSchoolId() {
+				utils.NewParserError(nil, "User doesn't have school id").HandleError(w, ctx)
+				return
+			}
 
 			if err := utils.HandleTx(ctx, db, user.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError

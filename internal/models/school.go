@@ -53,12 +53,16 @@ func ParseSchool(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	return nil
 }
 
-func (s School) SaveToDB(tx pgx.Tx) error {
-	_, err := tx.Exec(context.Background(), "insert into school (name, city, zip_code, street_address) values ($1, $2, $3, $4)",
-		s.name, s.city, s.zip_code, s.streetAddress,
-	)
-	if err != nil {
-		return err
+func (s School) SaveToDBReturningId(newSchoolId *int) utils.TxFunc {
+	return func(tx pgx.Tx) error {
+		err := tx.QueryRow(
+			context.TODO(),
+			"insert into school (name, city, zip_code, street_address) values ($1, $2, $3, $4) returning id",
+			s.name, s.city, s.zip_code, s.streetAddress,
+		).Scan(newSchoolId)
+		if err != nil {
+			return err
+		}
+		return nil
 	}
-	return nil
 }

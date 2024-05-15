@@ -89,7 +89,7 @@ func addRoutes(
 	mux.Handle("POST /absence", utils.ParseForm(
 		c.CreateAbsence(db), m.ParseAbsence,
 	))
-	mux.Handle("GET /", utils.WithAuth(c.GetHomepage()))
+	mux.Handle("GET /", utils.WithAuth(c.GetHomepage(db)))
 	mux.Handle("GET /register", c.GetRegister())
 	mux.Handle("GET /login", c.GetLogin())
 }

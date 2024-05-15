@@ -21,7 +21,14 @@ func RegisterSchool(db *pgxpool.Pool) http.Handler {
 			school := reqCtx.Value("school").(models.School)
 			admin := reqCtx.Value("user").(models.User)
 
-			if err := utils.HandleTx(ctx, db, school.SaveToDB, admin.SaveToDB); err != nil {
+			var newSchoolId int
+			if err := utils.HandleTx(
+				ctx,
+				db,
+				school.SaveToDBReturningId(&newSchoolId),
+				admin.SaveToDBWithSchoolId(&newSchoolId),
+			); err != nil {
+				fmt.Println(err)
 				utils.UnexpectedError(w, err, ctx)
 				return
 			}

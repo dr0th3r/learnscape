@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	i "github.com/dr0th3r/learnscape/internal"
+	"github.com/jackc/pgx/v5"
 )
 
 func TestUser(t *testing.T) {
@@ -34,6 +35,14 @@ func TestUser(t *testing.T) {
 	go i.Run(ctx)
 
 	if err := waitForReady(ctx); err != nil {
+		t.Error(err)
+	}
+	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("%s%s", db_url, db_name))
+	if err != nil {
+		t.Error(err)
+	}
+	schoolId, err := createSchool(conn)
+	if err != nil {
 		t.Error(err)
 	}
 
@@ -97,11 +106,31 @@ func TestUser(t *testing.T) {
 		}
 	})
 
+	t.Run("user without school_id is rejected", func(t *testing.T) {
+		res, err := http.PostForm(register_url, url.Values{
+			"user_name": {"test"},
+			"surname":   {"idk"},
+			"email":     {"random@email.com"},
+			"password":  {"test123456"},
+		})
+		if err != nil {
+			t.Error(err)
+		}
+		defer res.Body.Close()
+
+		got := res.StatusCode
+		want := http.StatusBadRequest
+		if got != want {
+			t.Errorf("Got %d, want %d", got, want)
+		}
+	})
+
 	t.Run("valid user is created", func(t *testing.T) {
 		res, err := http.PostForm(register_url, url.Values{
 			"user_name": {"test"},
 			"surname":   {"idk"},
 			"email":     {"random2@email.com"},
+			"school_id": {schoolId},
 			"password":  {"test123456"},
 		})
 		if err != nil {
@@ -136,7 +165,8 @@ func TestUser(t *testing.T) {
 			"user_name": {"test"},
 			"surname":   {"idk"},
 			"email":     {email},
-			"password":  {password}, //password is too short
+			"school_id": {schoolId},
+			"password":  {password},
 		})
 		if err != nil {
 			t.Error(err)

@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -23,6 +24,7 @@ type User struct {
 	name     string
 	surname  string
 	email    string
+	schoolId int
 	password string
 }
 
@@ -51,11 +53,21 @@ func ParseRegister(f url.Values, parserCtx context.Context, handlerCtx *context.
 		return utils.NewParserError(err, "Invalid password provided")
 	}
 
+	schoolIdUnprocessed := f.Get("school_id")
+	schoolId := -1
+	if schoolIdUnprocessed != "" {
+		schoolId, err = utils.ParseInt(span, "school_id", schoolIdUnprocessed)
+		if err != nil {
+			return utils.NewParserError(err, "Invalid school id")
+		}
+	}
+
 	user := User{
 		id:       uuid.NewString(),
 		name:     f.Get("user_name"),
 		surname:  f.Get("surname"),
 		email:    email.Address,
+		schoolId: schoolId,
 		password: password,
 	}
 
@@ -104,11 +116,21 @@ func ParseLogin(f url.Values, parserCtx context.Context, handlerCtx *context.Con
 	return nil
 }
 
+func (u User) SaveToDBWithSchoolId(schoolId *int) utils.TxFunc { //used to if wan't to explicitly pass school id
+	return func(tx pgx.Tx) error {
+		u.schoolId = *schoolId
+		return u.SaveToDB(tx)
+	}
+}
+
 func (u User) SaveToDB(tx pgx.Tx) error {
 	password_hash, err := argon2id.CreateHash(u.password, argon2id.DefaultParams)
+	if err != nil {
+		return err
+	}
 
-	_, err = tx.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
-		u.id, u.name, u.surname, u.email, password_hash)
+	_, err = tx.Exec(context.Background(), "insert into users (id, name, surname, email, password, school_id) values ($1, $2, $3, $4, $5, $6)",
+		u.id, u.name, u.surname, u.email, password_hash, u.schoolId)
 	if err != nil {
 		return err
 	}
@@ -135,6 +157,8 @@ func (u User) Login(db *pgxpool.Pool) error {
 	return nil
 }
 
+//TODO: split user to user with and without school id
+
 func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		utils.UserClaims{
@@ -142,7 +166,7 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 			Name:     u.name,
 			Surname:  u.surname,
 			Email:    u.email,
-			SchoolId: "test",
+			SchoolId: fmt.Sprint(u.schoolId),
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(exp),
 			},
@@ -164,4 +188,8 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 	http.SetCookie(w, &tokenCookie)
 
 	return nil
+}
+
+func (u User) HasSchoolId() bool {
+	return u.schoolId != -1
 }

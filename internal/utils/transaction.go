@@ -11,9 +11,9 @@ import (
 
 var tracerTransaction = otel.Tracer("transaction")
 
-type txFunc func(pgx.Tx) error
+type TxFunc func(pgx.Tx) error
 
-func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs ...txFunc) error {
+func HandleTx(ctx context.Context, db *pgxpool.Pool, txFuncs ...TxFunc) error {
 	_, span := tracerTransaction.Start(ctx, "handle db transaction")
 	defer span.End()
 

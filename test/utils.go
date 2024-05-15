@@ -104,8 +104,12 @@ func createSchool(db *pgx.Conn) (string, error) {
 func createUser(db *pgx.Conn) (string, error) {
 	id := uuid.NewString()
 	email := randomString(5) + "@test.com"
-	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password) values ($1, $2, $3, $4, $5)",
-		id, "test", "idk", email, "testidk123",
+	schoolId, err := createSchool(db)
+	if err != nil {
+		return "", err
+	}
+	_, err = db.Exec(context.Background(), "insert into users (id, name, surname, email, password, school_id) values ($1, $2, $3, $4, $5, $6)",
+		id, "test", "idk", email, "testidk123", schoolId,
 	)
 	if err != nil {
 		return "", err
