@@ -53,6 +53,12 @@
 			</tbody>
 		</table>
 	</div>
+	<form hx-post="/period" hx-trigger="submit" hx-swap="innerHTML">
+		<input type="time" name="start">
+		<input type="time" name="end">
+		<button type="submit" class="bg-white">Create</button>
+		<p id="create-period-target" class="text-white"></p>
+	</form>
 </body>
 
 </html>

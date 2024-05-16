@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/dr0th3r/learnscape/internal/models"
@@ -30,6 +31,7 @@ func CreatePeriod(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
+			fmt.Fprint(w, "success")
 			w.WriteHeader(http.StatusCreated)
 		},
 	)
