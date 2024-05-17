@@ -19,6 +19,8 @@ func CreatePeriod(db *pgxpool.Pool) http.Handler {
 			defer span.End()
 
 			period := reqCtx.Value("period").(models.Period)
+			claims := reqCtx.Value("claims").(utils.UserClaims)
+			period.SetSchoolId(claims.SchoolId)
 
 			if err := utils.HandleTx(ctx, db, period.SaveToDB); err != nil {
 				var pgErr *pgconn.PgError

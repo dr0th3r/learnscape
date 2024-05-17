@@ -18,7 +18,7 @@ type UserClaims struct {
 	Name     string `json:"name"`
 	Surname  string `json:"surname"`
 	Email    string `json:"email"`
-	SchoolId string `json:"schoolId"`
+	SchoolId int    `json:"schoolId"`
 	jwt.RegisteredClaims
 }
 

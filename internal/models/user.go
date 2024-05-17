@@ -3,7 +3,6 @@ package models
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"net/mail"
 	"net/url"
@@ -170,7 +169,7 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 			Name:     u.name,
 			Surname:  u.surname,
 			Email:    u.email,
-			SchoolId: fmt.Sprint(u.schoolId),
+			SchoolId: u.schoolId,
 			RegisteredClaims: jwt.RegisteredClaims{
 				ExpiresAt: jwt.NewNumericDate(exp),
 			},

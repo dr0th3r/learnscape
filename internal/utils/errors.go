@@ -28,9 +28,9 @@ func HandleError(w http.ResponseWriter, err error, code int, msg string, ctx con
 
 	w.WriteHeader(code)
 	if msg == "" {
-		fmt.Fprintf(w, err.Error())
+		fmt.Fprintf(w, "<p>%s</p>", err.Error())
 	} else {
-		fmt.Fprintf(w, msg)
+		fmt.Fprintf(w, "<p>%s</p>", msg)
 	}
 }
 

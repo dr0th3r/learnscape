@@ -38,9 +38,11 @@ func addRoutes(
 	mux.Handle("POST /register_school", utils.ParseForm(
 		c.RegisterSchool(db), m.ParseRegister, m.ParseSchool,
 	))
-	mux.Handle("POST /period", utils.ParseForm(
-		c.CreatePeriod(db), m.ParsePeriod,
-	))
+	mux.Handle("POST /period",
+		utils.WithAuth(utils.ParseForm(
+			c.CreatePeriod(db), m.ParsePeriod,
+		)),
+	)
 	mux.Handle("POST /room", utils.ParseForm(
 		c.CreateRoom(db), m.ParseRoom,
 	))

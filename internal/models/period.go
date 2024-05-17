@@ -22,11 +22,6 @@ func ParsePeriod(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing period")
 
-	schoolId, err := utils.ParseInt(span, "school_id", f.Get("school_id"))
-	if err != nil {
-		return utils.NewParserError(err, "Invalid school id")
-	}
-
 	start, err := utils.ParseTime(span, "start", f.Get("start"), time.TimeOnly)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
@@ -42,12 +37,16 @@ func ParsePeriod(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 
 	*handlerCtx = context.WithValue(*handlerCtx, "period", Period{
 		id:       -1,
-		schoolId: schoolId,
+		schoolId: -1,
 		start:    start,
 		end:      end,
 	})
 
 	return nil
+}
+
+func (p *Period) SetSchoolId(schoolId int) {
+	p.schoolId = schoolId
 }
 
 func (p Period) SaveToDB(tx pgx.Tx) error {

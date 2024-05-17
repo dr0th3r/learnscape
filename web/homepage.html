@@ -53,7 +53,7 @@
 			</tbody>
 		</table>
 	</div>
-	<form hx-post="/period" hx-trigger="submit" hx-swap="innerHTML">
+	<form hx-post="/period" hx-trigger="submit" hx-target="#create-period-target">
 		<input type="time" name="start">
 		<input type="time" name="end">
 		<button type="submit" class="bg-white">Create</button>
