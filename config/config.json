@@ -12,7 +12,6 @@
 		"migrationsDir": "../internal/db/migrations"
 	},
 	"app": {
-		"timeFormat": "08:00",
 		"jwtSecret": "my secret"
 	}
 }

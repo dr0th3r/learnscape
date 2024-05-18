@@ -1,11 +1,9 @@
 package utils
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 )
 
@@ -40,8 +38,7 @@ func (c DBConfig) GetConnectionUrlWithoutName() string {
 }
 
 type AppConfig struct {
-	TimeFormat string `json:"timeFormat"`
-	JwtSecret  string
+	JwtSecret string `json:"jwtSecret"`
 }
 
 func ParseConfig() (*Config, error) {
@@ -62,11 +59,4 @@ func ParseConfig() (*Config, error) {
 	}
 
 	return &config, nil
-}
-
-func WithAppConfig(next http.Handler, config AppConfig) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		ctx := context.WithValue(r.Context(), "config", config)
-		next.ServeHTTP(w, r.WithContext(ctx))
-	})
 }

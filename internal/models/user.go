@@ -162,7 +162,7 @@ func (u *User) Login(db *pgxpool.Pool) error {
 
 //TODO: split user to user with and without school id
 
-func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) error {
+func (u User) CreateTokenCookie(secret []byte, exp time.Time) (*http.Cookie, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
 		utils.UserClaims{
 			Id:       u.id,
@@ -178,7 +178,7 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 
 	tokenStr, err := token.SignedString(secret)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	tokenCookie := http.Cookie{
@@ -188,9 +188,8 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode, //TODO: add other config by OWASP later
 	}
-	http.SetCookie(w, &tokenCookie)
 
-	return nil
+	return &tokenCookie, nil
 }
 
 func (u User) HasSchoolId() bool {

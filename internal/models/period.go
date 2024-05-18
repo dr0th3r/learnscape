@@ -11,6 +11,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+const InputTimeFormat = "15:04"
+
 type Period struct {
 	id       int
 	schoolId int
@@ -22,13 +24,11 @@ func ParsePeriod(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing period")
 
-	config := parserCtx.Value("config").(utils.AppConfig)
-
-	start, err := utils.ParseTime(span, "start", f.Get("start"), config.TimeFormat)
+	start, err := utils.ParseTime(span, "start", f.Get("start"), InputTimeFormat)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
 	}
-	end, err := utils.ParseTime(span, "end", f.Get("end"), config.TimeFormat)
+	end, err := utils.ParseTime(span, "end", f.Get("end"), InputTimeFormat)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid end time")
 	}

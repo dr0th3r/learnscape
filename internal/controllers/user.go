@@ -12,7 +12,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterUser(db *pgxpool.Pool) http.Handler {
+const jwtCookieLifetime = time.Hour * 72
+
+func RegisterUser(db *pgxpool.Pool, jwtSecret string) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			reqCtx := r.Context()
@@ -36,17 +38,19 @@ func RegisterUser(db *pgxpool.Pool) http.Handler {
 			}
 
 			span.AddEvent("Set user jwt token")
-			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
+			tokenCookie, err := user.CreateTokenCookie([]byte(jwtSecret), time.Now().Add(jwtCookieLifetime))
+			if err != nil {
+				utils.UnexpectedError(w, err, ctx)
 				return
 			}
+			http.SetCookie(w, tokenCookie)
 
 			w.WriteHeader(http.StatusCreated)
 		},
 	)
 }
 
-func Login(db *pgxpool.Pool) http.Handler {
+func Login(db *pgxpool.Pool, jwtSecret string) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			reqCtx := r.Context()
@@ -61,12 +65,13 @@ func Login(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			config := reqCtx.Value("config").(utils.AppConfig)
-
 			span.AddEvent("Set user jwt")
-			if err := user.SetToken(w, []byte(config.JwtSecret), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
+			tokenCookie, err := user.CreateTokenCookie([]byte(jwtSecret), time.Now().Add(jwtCookieLifetime))
+			if err != nil {
+				utils.UnexpectedError(w, err, ctx)
+				return
 			}
+			http.SetCookie(w, tokenCookie)
 
 		},
 	)

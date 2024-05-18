@@ -17,27 +17,27 @@ func NewServer(db *pgxpool.Pool, config utils.AppConfig) http.Handler {
 	mux.Handle("GET /css/", http.StripPrefix("/css/", css))
 	mux.Handle("GET /js/", http.StripPrefix("/js/", js))
 
-	addRoutes(mux, db)
+	addRoutes(mux, db, config.JwtSecret)
 	var handler http.Handler = mux
 	handler = otelhttp.NewHandler(handler, "server")
-	handler = utils.WithAppConfig(handler, config)
 	return handler
 }
 
 func addRoutes(
 	mux *http.ServeMux,
 	db *pgxpool.Pool,
+	jwtSecret string,
 ) {
 
 	mux.Handle("GET /health_check", c.HealthCheck())
 	mux.Handle("POST /register_user", utils.ParseForm(
-		c.RegisterUser(db), m.ParseRegister,
+		c.RegisterUser(db, jwtSecret), m.ParseRegister,
 	))
 	mux.Handle("POST /login", utils.ParseForm(
-		c.Login(db), m.ParseLogin,
+		c.Login(db, jwtSecret), m.ParseLogin,
 	))
 	mux.Handle("POST /register_school", utils.ParseForm(
-		c.RegisterSchool(db), m.ParseRegister, m.ParseSchool,
+		c.RegisterSchool(db, jwtSecret), m.ParseRegister, m.ParseSchool,
 	))
 	mux.Handle("POST /period",
 		utils.WithAuth(utils.ParseForm(

@@ -11,7 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func RegisterSchool(db *pgxpool.Pool) http.Handler {
+func RegisterSchool(db *pgxpool.Pool, jwtSecret string) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, r *http.Request) {
 			reqCtx := r.Context()
@@ -34,10 +34,12 @@ func RegisterSchool(db *pgxpool.Pool) http.Handler {
 			}
 
 			span.AddEvent("Starting to set jwt token for admin")
-			if err := admin.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
-				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
+			tokenCookie, err := admin.CreateTokenCookie([]byte(jwtSecret), time.Now().Add(jwtCookieLifetime))
+			if err != nil {
+				utils.UnexpectedError(w, err, ctx)
 				return
 			}
+			http.SetCookie(w, tokenCookie)
 
 			w.WriteHeader(http.StatusCreated)
 		},
