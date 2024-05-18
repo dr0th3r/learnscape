@@ -61,8 +61,10 @@ func Login(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
+			config := reqCtx.Value("config").(utils.AppConfig)
+
 			span.AddEvent("Set user jwt")
-			if err := user.SetToken(w, []byte("my secret"), time.Now().Add(time.Hour*72)); err != nil {
+			if err := user.SetToken(w, []byte(config.JwtSecret), time.Now().Add(time.Hour*72)); err != nil {
 				utils.HandleError(w, err, http.StatusInternalServerError, "Error setting jwt", ctx)
 			}
 

@@ -22,11 +22,13 @@ func ParsePeriod(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	span := trace.SpanFromContext(parserCtx)
 	span.AddEvent("Parsing period")
 
-	start, err := utils.ParseTime(span, "start", f.Get("start"), time.TimeOnly)
+	config := parserCtx.Value("config").(utils.AppConfig)
+
+	start, err := utils.ParseTime(span, "start", f.Get("start"), config.TimeFormat)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid start time")
 	}
-	end, err := utils.ParseTime(span, "end", f.Get("end"), time.TimeOnly)
+	end, err := utils.ParseTime(span, "end", f.Get("end"), config.TimeFormat)
 	if err != nil {
 		return utils.NewParserError(err, "Invalid end time")
 	}

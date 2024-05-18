@@ -20,14 +20,13 @@ import (
 	u "github.com/dr0th3r/learnscape/internal/utils"
 )
 
-func initDB() (*pgxpool.Pool, error) {
-	full_db_url := os.Getenv("DATABASE_URL") + os.Getenv("DATABASE_NAME") + "?sslmode=disable"
-	path := "file:///media/user/Elements/coding/go/projects/learnScape/internal/db/migrations"
+func initDB(config u.DBConfig) (*pgxpool.Pool, error) {
+	connectionUrl := config.GetConnectionUrl()
 
 	//migrate database
 	m, err := migrate.New(
-		path,
-		full_db_url,
+		fmt.Sprintf("file://%s", config.MigrationsDir),
+		connectionUrl,
 	)
 	if err != nil {
 		return nil, err
@@ -37,14 +36,14 @@ func initDB() (*pgxpool.Pool, error) {
 	}
 
 	//return dbpool
-	return pgxpool.New(context.Background(), full_db_url)
+	return pgxpool.New(context.Background(), connectionUrl)
 }
 
-func Run(ctx context.Context) (err error) {
+func Run(ctx context.Context, config *u.Config) (err error) {
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
 	defer cancel()
 
-	db, err := initDB()
+	db, err := initDB(config.DB)
 	if err != nil {
 		return errors.New("error connecting to database: " + err.Error())
 	}
@@ -61,9 +60,9 @@ func Run(ctx context.Context) (err error) {
 		}
 	}()
 
-	srv := NewServer(db)
+	srv := NewServer(db, config.App)
 	httpServer := &http.Server{
-		Addr:    net.JoinHostPort("localhost", "8080"),
+		Addr:    net.JoinHostPort(config.Server.Host, fmt.Sprint(config.Server.Port)),
 		Handler: srv,
 	}
 

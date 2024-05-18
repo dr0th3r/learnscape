@@ -10,7 +10,7 @@ import (
 	"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"
 )
 
-func NewServer(db *pgxpool.Pool) http.Handler {
+func NewServer(db *pgxpool.Pool, config utils.AppConfig) http.Handler {
 	mux := http.NewServeMux()
 	css := http.FileServer(http.Dir("./web/css/"))
 	js := http.FileServer(http.Dir("./web/js/"))
@@ -20,6 +20,7 @@ func NewServer(db *pgxpool.Pool) http.Handler {
 	addRoutes(mux, db)
 	var handler http.Handler = mux
 	handler = otelhttp.NewHandler(handler, "server")
+	handler = utils.WithAppConfig(handler, config)
 	return handler
 }
 

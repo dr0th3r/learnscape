@@ -6,25 +6,30 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 	"testing"
 
 	i "github.com/dr0th3r/learnscape/internal"
+	"github.com/dr0th3r/learnscape/internal/utils"
 	"github.com/jackc/pgx/v5"
 )
 
 func TestRegularReport(t *testing.T) {
-	db_url := os.Getenv("DATABASE_URL")
-	db_name := "test_" + fmt.Sprint(rand.Int())
-	t.Setenv("DATABASE_NAME", db_name)
+	config, err := utils.ParseConfig()
+	if err != nil {
+		t.Error(err)
+	}
 
-	if err := createNewDB(db_url, db_name); err != nil {
+	connectionUrl := config.DB.GetConnectionUrlWithoutName()
+	db_name := "test_" + fmt.Sprint(rand.Int())
+	config.DB.Name = db_name
+
+	if err := createNewDB(connectionUrl, db_name); err != nil {
 		t.Error(err)
 		return
 	}
 
 	t.Cleanup(func() {
-		if err := dropDB(db_url, db_name); err != nil {
+		if err := dropDB(connectionUrl, db_name); err != nil {
 			fmt.Println(err)
 		}
 	})
@@ -32,13 +37,13 @@ func TestRegularReport(t *testing.T) {
 	ctx := context.Background()
 	ctx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
-	go i.Run(ctx)
+	go i.Run(ctx, config)
 
 	if err := waitForReady(ctx); err != nil {
 		t.Error(err)
 	}
 
-	conn, err := pgx.Connect(context.Background(), fmt.Sprintf("%s%s", db_url, db_name))
+	conn, err := pgx.Connect(context.Background(), config.DB.GetConnectionUrl())
 	if err != nil {
 		t.Error(err)
 	}
