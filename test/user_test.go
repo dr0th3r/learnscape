@@ -46,6 +46,8 @@ func TestUser(t *testing.T) {
 		t.Error(err)
 	}
 
+	schoolIdStr := fmt.Sprint(schoolId)
+
 	register_url := "http://localhost:8080/register_user"
 	login_url := "http://localhost:8080/login"
 
@@ -130,7 +132,7 @@ func TestUser(t *testing.T) {
 			"user_name": {"test"},
 			"surname":   {"idk"},
 			"email":     {"random2@email.com"},
-			"school_id": {schoolId},
+			"school_id": {schoolIdStr},
 			"password":  {"test123456"},
 		})
 		if err != nil {
@@ -165,7 +167,7 @@ func TestUser(t *testing.T) {
 			"user_name": {"test"},
 			"surname":   {"idk"},
 			"email":     {email},
-			"school_id": {schoolId},
+			"school_id": {schoolIdStr},
 			"password":  {password},
 		})
 		if err != nil {

@@ -176,14 +176,14 @@ func (u User) SetToken(w http.ResponseWriter, secret []byte, exp time.Time) erro
 		},
 	)
 
-	tokentStr, err := token.SignedString(secret)
+	tokenStr, err := token.SignedString(secret)
 	if err != nil {
 		return err
 	}
 
 	tokenCookie := http.Cookie{
 		Name:     "token",
-		Value:    tokentStr,
+		Value:    tokenStr,
 		Expires:  exp,
 		HttpOnly: true,
 		SameSite: http.SameSiteStrictMode, //TODO: add other config by OWASP later

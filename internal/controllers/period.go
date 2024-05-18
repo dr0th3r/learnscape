@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/dr0th3r/learnscape/internal/models"
@@ -19,10 +18,10 @@ func CreatePeriod(db *pgxpool.Pool) http.Handler {
 			defer span.End()
 
 			period := reqCtx.Value("period").(models.Period)
-			claims := reqCtx.Value("claims").(utils.UserClaims)
-			period.SetSchoolId(claims.SchoolId)
 
-			if err := utils.HandleTx(ctx, db, period.SaveToDB); err != nil {
+			claims := reqCtx.Value("claims").(*utils.UserClaims)
+
+			if err := utils.HandleTx(ctx, db, period.SaveToDBWithSchoolId(claims.SchoolId)); err != nil {
 				var pgErr *pgconn.PgError
 				if errors.As(err, &pgErr) && pgErr.Code == "22000" {
 					utils.HandleError(w, err, http.StatusBadRequest, "Period times overlap or start is before end", ctx)
@@ -33,7 +32,6 @@ func CreatePeriod(db *pgxpool.Pool) http.Handler {
 				return
 			}
 
-			fmt.Fprint(w, "success")
 			w.WriteHeader(http.StatusCreated)
 		},
 	)

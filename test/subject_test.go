@@ -47,11 +47,13 @@ func TestSubject(t *testing.T) {
 		t.Error(err)
 	}
 
+	schoolIdStr := fmt.Sprint(schoolId)
+
 	create_subject_url := "http://localhost:8080/subject"
 
 	t.Run("can't create subject without name", func(t *testing.T) {
 		res, err := http.PostForm(create_subject_url, url.Values{
-			"school_id": {schoolId},
+			"school_id": {schoolIdStr},
 			"mandatory": {"false"},
 		})
 		if err != nil {
@@ -68,7 +70,7 @@ func TestSubject(t *testing.T) {
 
 	t.Run("can create subject without passing if it's mandatory", func(t *testing.T) {
 		res, err := http.PostForm(create_subject_url, url.Values{
-			"school_id": {schoolId},
+			"school_id": {schoolIdStr},
 			"name":      {"Maths"},
 		})
 		if err != nil {

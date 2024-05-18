@@ -47,7 +47,7 @@ func TestSubstituteTimetable(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	teacherId, err := createUser(conn)
+	teacherId, err := createUser(conn, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -132,7 +132,7 @@ func TestSubstituteTimetable(t *testing.T) {
 			"period_id":  {periodId},
 			"subject_id": {subjectId},
 			"room_id":    {roomId},
-			"school_id":  {schoolId},
+			"school_id":  {fmt.Sprint(schoolId)},
 			"date":       {date},
 		})
 

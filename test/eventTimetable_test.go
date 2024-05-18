@@ -52,6 +52,8 @@ func TestEventTimetable(t *testing.T) {
 	start := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 	end := time.Now().Add(time.Hour * 24).Format(time.RFC3339)
 
+	schoolIdStr := fmt.Sprint(schoolId)
+
 	create_url := "http://localhost:8080/event_timetable"
 
 	t.Run("incomplete body returns 400 bad request", func(t *testing.T) {
@@ -76,7 +78,7 @@ func TestEventTimetable(t *testing.T) {
 			"name":      {name},
 			"start":     {start},
 			"end":       {end},
-			"school_id": {schoolId},
+			"school_id": {schoolIdStr},
 		})
 
 		if err != nil {
@@ -97,7 +99,7 @@ func TestEventTimetable(t *testing.T) {
 			"description": {description},
 			"start":       {start},
 			"end":         {end},
-			"school_id":   {schoolId},
+			"school_id":   {schoolIdStr},
 		})
 
 		if err != nil {

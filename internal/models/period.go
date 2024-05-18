@@ -45,22 +45,21 @@ func ParsePeriod(f url.Values, parserCtx context.Context, handlerCtx *context.Co
 	return nil
 }
 
-func (p *Period) SetSchoolId(schoolId int) {
-	p.schoolId = schoolId
-}
+func (p Period) SaveToDBWithSchoolId(schoolId int) utils.TxFunc {
+	return func(tx pgx.Tx) error {
+		_, err := tx.Exec(context.Background(), "insert into period (school_id, span) values($1, $2)",
+			schoolId,
+			fmt.Sprintf(
+				"[%s, %s]",
+				p.start.Format(time.TimeOnly),
+				p.end.Format(time.TimeOnly),
+			),
+		)
+		if err != nil {
+			return err
+		}
 
-func (p Period) SaveToDB(tx pgx.Tx) error {
-	_, err := tx.Exec(context.Background(), "insert into period (school_id, span) values($1, $2)",
-		p.schoolId,
-		fmt.Sprintf(
-			"[%s, %s]",
-			p.start.Format(time.TimeOnly),
-			p.end.Format(time.TimeOnly),
-		),
-	)
-	if err != nil {
-		return err
+		return nil
+
 	}
-
-	return nil
 }

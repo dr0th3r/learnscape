@@ -3,6 +3,7 @@ package utils
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -45,8 +46,14 @@ func WithAuth(next http.Handler) http.Handler {
 		})
 		if err != nil {
 			UnexpectedError(w, err, ctx)
-		} else if claims, ok := token.Claims.(*UserClaims); !ok {
+			return
+		}
+		fmt.Println("token: ", token.Claims)
+
+		if claims, ok := token.Claims.(*UserClaims); !ok {
+			fmt.Println("not ok")
 			UnexpectedError(w, err, ctx)
+			return
 		} else {
 			ctx = context.WithValue(reqCtx, "claims", claims)
 		}

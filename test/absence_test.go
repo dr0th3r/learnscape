@@ -43,7 +43,7 @@ func TestAbsence(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	userId, err := createUser(conn)
+	userId, err := createUser(conn, -1)
 	if err != nil {
 		t.Error(err)
 	}

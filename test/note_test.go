@@ -42,11 +42,11 @@ func TestNote(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	studentId, err := createUser(conn)
+	schoolId, err := createSchool(conn)
 	if err != nil {
 		t.Error(err)
 	}
-	schoolId, err := createSchool(conn)
+	studentId, err := createUser(conn, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -62,7 +62,7 @@ func TestNote(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	timetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	timetableId, err := createRegularTimetable(conn, periodId, subjectId, roomId, schoolId)
 	if err != nil {
 		t.Error(err)
 	}

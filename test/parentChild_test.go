@@ -42,11 +42,11 @@ func TestParentChild(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	parentId, err := createUser(conn)
+	parentId, err := createUser(conn, -1)
 	if err != nil {
 		t.Error(err)
 	}
-	childId, err := createUser(conn)
+	childId, err := createUser(conn, -1)
 	if err != nil {
 		t.Error(err)
 	}

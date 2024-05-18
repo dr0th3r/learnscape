@@ -47,7 +47,7 @@ func TestClass(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	teacherId, err := createUser(conn)
+	teacherId, err := createUser(conn, -1)
 	if err != nil {
 		t.Error(err)
 	}

@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/dr0th3r/learnscape/internal/utils"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -90,25 +92,28 @@ func waitForReady(ctx context.Context) error {
 	}
 }
 
-func createSchool(db *pgx.Conn) (string, error) {
-	id := fmt.Sprint(rand.Intn(10000))
+func createSchool(db *pgx.Conn) (int, error) {
+	id := rand.Intn(10000)
 	_, err := db.Exec(context.Background(), "insert into school (id, name, city, zip_code, street_address) values ($1, $2, $3, $4, $5)",
 		id, "test", "test city", "123 45", "street 7",
 	)
 	if err != nil {
-		return "", err
+		return -1, err
 	}
 	return id, nil
 }
 
-func createUser(db *pgx.Conn) (string, error) {
+func createUser(db *pgx.Conn, schoolId int) (string, error) {
 	id := uuid.NewString()
 	email := randomString(5) + "@test.com"
-	schoolId, err := createSchool(db)
-	if err != nil {
-		return "", err
+	if schoolId == -1 {
+		var err error
+		schoolId, err = createSchool(db)
+		if err != nil {
+			return "", err
+		}
 	}
-	_, err = db.Exec(context.Background(), "insert into users (id, name, surname, email, password, school_id) values ($1, $2, $3, $4, $5, $6)",
+	_, err := db.Exec(context.Background(), "insert into users (id, name, surname, email, password, school_id) values ($1, $2, $3, $4, $5, $6)",
 		id, "test", "idk", email, "testidk123", schoolId,
 	)
 	if err != nil {
@@ -117,7 +122,7 @@ func createUser(db *pgx.Conn) (string, error) {
 	return id, nil
 }
 
-func createPeriod(db *pgx.Conn, schoolId string) (string, error) {
+func createPeriod(db *pgx.Conn, schoolId int) (string, error) {
 	id := fmt.Sprint(rand.Intn(10000))
 
 	_, err := db.Exec(context.Background(), "insert into period (id, school_id, span) values ($1, $2, $3)", id, schoolId, "[8:00:00, 8:45:00]")
@@ -139,7 +144,7 @@ func createSubject(db *pgx.Conn) (string, error) {
 	return id, nil
 }
 
-func createRoom(db *pgx.Conn, teacherId string, schoolId string) (string, error) {
+func createRoom(db *pgx.Conn, teacherId string, schoolId int) (string, error) {
 	id := fmt.Sprint(rand.Intn(10000))
 
 	_, err := db.Exec(context.Background(), "insert into room (id, name, teacher_id, school_id) values ($1, $2, $3, $4)", id, "Labs", teacherId, schoolId)
@@ -150,7 +155,7 @@ func createRoom(db *pgx.Conn, teacherId string, schoolId string) (string, error)
 	return id, nil
 }
 
-func createRegularTimetable(db *pgx.Conn, periodId, subjectId, schoolId, roomId string) (string, error) {
+func createRegularTimetable(db *pgx.Conn, periodId, subjectId, roomId string, schoolId int) (string, error) {
 	id := fmt.Sprint(rand.Intn(10000))
 
 	_, err := db.Exec(context.Background(),
@@ -219,4 +224,34 @@ func createReport(db *pgx.Conn, reportedBy, timetableId string) (string, error) 
 	}
 
 	return id, nil
+}
+
+func createUserJWT(id string, schoolId int) (http.Cookie, error) {
+	exp := time.Now().Add(time.Hour)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256,
+		utils.UserClaims{
+			Id: id,
+			//the "idk" values dont matter
+			Name:     "idk",
+			Surname:  "idk",
+			Email:    "idk@idk.com",
+			SchoolId: schoolId,
+			RegisteredClaims: jwt.RegisteredClaims{
+				ExpiresAt: jwt.NewNumericDate(exp),
+			},
+		},
+	)
+
+	tokenStr, err := token.SignedString([]byte("my secret"))
+	if err != nil {
+		return http.Cookie{}, err
+	}
+
+	return http.Cookie{
+		Name:     "token",
+		Value:    tokenStr,
+		Expires:  time.Now().Add(time.Hour),
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+	}, nil
 }

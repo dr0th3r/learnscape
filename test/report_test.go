@@ -46,7 +46,7 @@ func TestRegularReport(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	teacherId, err := createUser(conn)
+	teacherId, err := createUser(conn, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -63,7 +63,7 @@ func TestRegularReport(t *testing.T) {
 		t.Error(err)
 	}
 
-	timetableId, err := createRegularTimetable(conn, periodId, subjectId, schoolId, roomId)
+	timetableId, err := createRegularTimetable(conn, periodId, subjectId, roomId, schoolId)
 	if err != nil {
 		t.Error(err)
 	}

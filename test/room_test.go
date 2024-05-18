@@ -42,11 +42,11 @@ func TestRoom(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	school_id, err := createSchool(conn)
+	schoolId, err := createSchool(conn)
 	if err != nil {
 		t.Error(err)
 	}
-	teacher_id, err := createUser(conn)
+	teacher_id, err := createUser(conn, schoolId)
 	if err != nil {
 		t.Error(err)
 	}
@@ -55,7 +55,7 @@ func TestRoom(t *testing.T) {
 
 	t.Run("can't create room with invalid body", func(t *testing.T) {
 		res, err := http.PostForm(create_room_url, url.Values{
-			"school_id":  {school_id},
+			"school_id":  {fmt.Sprint(schoolId)},
 			"teacher_id": {teacher_id},
 			//name is missing
 		})
@@ -73,7 +73,7 @@ func TestRoom(t *testing.T) {
 
 	t.Run("can create valid room", func(t *testing.T) {
 		res, err := http.PostForm(create_room_url, url.Values{
-			"school_id":  {school_id},
+			"school_id":  {fmt.Sprint(schoolId)},
 			"teacher_id": {teacher_id},
 			"name":       {"my room"},
 		})
