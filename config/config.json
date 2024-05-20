@@ -9,7 +9,7 @@
 		"user": "postgres",
 		"password": "password",
 		"name": "learnscape",
-		"migrationsDir": "../internal/db/migrations"
+		"migrationsDir": "internal/db/migrations"
 	},
 	"app": {
 		"jwtSecret": "my secret"
